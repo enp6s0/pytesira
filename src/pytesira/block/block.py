@@ -68,13 +68,13 @@ class Block:
 
     def export_init_helper(self) -> dict:
         """
-        Export initialization helper. This will be called by the main thread
+        Export initialization helper/map. This will be called by the main thread
         after the attribute query process, which allows for the block map
         to be updated
         """
         return {
             "version" : self.VERSION,
-            "helper" : {}
+            "helper" : self._init_helper
         }
 
     def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:

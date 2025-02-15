@@ -33,11 +33,7 @@ class MuteControl(Block):
         # If init helper isn't set, this is the time to query
         try:
             assert init_helper is not None, "no helper present"
-
-            self.ganged = init_helper["ganged"]
-            self.channels = {}
-            for i, d in init_helper["channels"].items():
-                self.channels[str(i)] = d
+            self.__load_init_helper(init_helper)
 
         except Exception as e:
             # There's a problem, throw warning and then simply query
@@ -46,7 +42,25 @@ class MuteControl(Block):
 
         # Setup subscriptions
         self.register_subscriptions()
+
+        # Initialization helper (this will be used by export_init_helper() in the superclass
+        # to save initialization maps)
+        self._init_helper = {
+            "ganged" : self.ganged,
+            "channels" : self.channels
+        }
         
+    # =================================================================================================================
+
+    def __load_init_helper(self, init_helper : dict) -> None:
+        """
+        Use initialization helper to set up attributes instead of querying
+        """
+        self.ganged = init_helper["ganged"]
+        self.channels = {}
+        for i, d in init_helper["channels"].items():
+            self.channels[str(i)] = d
+
     # =================================================================================================================
 
     def register_subscriptions(self) -> None:
@@ -56,20 +70,6 @@ class MuteControl(Block):
         in connectivity is detected (e.g., SSH disconnect-then-reconnect)
         """
         self._register_subscription(subscribe_type = "mutes", channel = None)
-
-    # =================================================================================================================
-
-    def export_init_helper(self) -> dict:
-        """
-        Export initialization helper dict (to make setup faster in the future)
-        """
-        helper = super().export_init_helper()
-        helper["helper"] = {
-            "ganged" : self.ganged,
-            "channels" : self.channels
-        }
-
-        return helper
 
     # =================================================================================================================
 

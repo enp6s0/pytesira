@@ -42,6 +42,16 @@ class SourceSelector(Block):
 
         # Setup subscriptions
         self.register_subscriptions()
+
+        # Initialization helper (this will be used by export_init_helper() in the superclass
+        # to save initialization maps)
+        self._init_helper = {
+            "stereo" : self.stereo,
+            "num_input" : self.num_input,
+            "num_output" : self.num_output,
+            "sources" : self.sources,
+            "output_level" : self.output_level,
+        }
         
     # =================================================================================================================
 
@@ -72,21 +82,6 @@ class SourceSelector(Block):
         self.selected_source = 0    # updated by subscription, not in helper
         self.sources = init_helper["sources"]
         self.output_level = init_helper["output_level"]
-
-    def export_init_helper(self) -> dict:
-        """
-        Export initialization helper dict (to make setup faster in the future)
-        """
-        helper = super().export_init_helper()
-        helper["helper"] = {
-            "stereo" : self.stereo,
-            "num_input" : self.num_input,
-            "num_output" : self.num_output,
-            "sources" : self.sources,
-            "output_level" : self.output_level,
-        }
-
-        return helper
 
     # =================================================================================================================
 
