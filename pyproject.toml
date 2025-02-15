@@ -31,3 +31,7 @@ Issues = "https://github.com/enp6s0/pytesira/issues"
 pythonpath = [
   "src"
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
