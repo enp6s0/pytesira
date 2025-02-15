@@ -207,6 +207,40 @@ class DSP:
 
     # =================================================================================================================
 
+    def save_block_map(self, output : str) -> None:
+        """
+        Save active DSP block map to a file
+        """
+        output = str(output).strip()
+        assert output != "", "Output must be specified"
+
+        # Enforce file extension to prevent confusion and inadvertent inclusion in repository
+        if not output.endswith(".bmap"):
+            output = f"{output}.bmap"
+
+        output = os.path.realpath(str(output))
+        assert self.__block_map, "No active DSP block map"
+        with open(output, "w") as f:
+            json.dump({
+                "hostname" : self.hostname,
+                "aliases" : sorted(self.__dsp_aliases),
+                "blocks" : self.__block_map,
+                "pytesira_version" : self.__version
+            }, f, indent = 4)
+        self.__logger.info(f"DSP block map saved: {output}")
+            
+    # =================================================================================================================
+
+    def reboot(self) -> None:
+        """
+        Send reboot (restart) command to device
+        """
+        assert self.ready, "DSP not ready"
+        self.__sync_command("DEVICE reboot")
+        return
+
+    # =================================================================================================================
+
     def __getDSPBlockMap(self) -> dict:
         """
         Get DSP block map, either from the block map file (if one was specified at time of object creation),
@@ -279,30 +313,6 @@ class DSP:
 
     # =================================================================================================================
 
-    def save_block_map(self, output : str) -> None:
-        """
-        Save active DSP block map to a file
-        """
-        output = str(output).strip()
-        assert output != "", "Output must be specified"
-
-        # Enforce file extension to prevent confusion and inadvertent inclusion in repository
-        if not output.endswith(".bmap"):
-            output = f"{output}.bmap"
-
-        output = os.path.realpath(str(output))
-        assert self.__block_map, "No active DSP block map"
-        with open(output, "w") as f:
-            json.dump({
-                "hostname" : self.hostname,
-                "aliases" : sorted(self.__dsp_aliases),
-                "blocks" : self.__block_map,
-                "pytesira_version" : self.__version
-            }, f, indent = 4)
-        self.__logger.info(f"DSP block map saved: {output}")
-            
-    # =================================================================================================================
-
     def __sync_cmd_process_loop(self) -> None:
         """
         Synchronous command worker loop. This processes the synchronous command queue,
@@ -341,6 +351,32 @@ class DSP:
 
         # If we're here, we're exiting
         self.__logger.debug("synchronous command processor loop terminated")
+        return
+
+    # =================================================================================================================
+
+    def __device_data_refresh_loop(self) -> None:
+        """
+        Device data refresh loop. This constantly queries the device for attributes that cannot
+        be subscribed to, but nevertheless would be of interest to PyTesira users (e.g., active alarms)
+
+        We simply poll the device (with a configurable interval) for this...
+        """
+        self.__logger.info("starting device data refresh loop")
+        while not self.__exit.is_set():
+
+            # Query active faults
+            self.faults = self.__sync_command("DEVICE get activeFaultList").value
+
+            # Query network status
+            self.network = self.__sync_command("DEVICE get networkStatus").value
+
+            # Throttle query to the interval we're configured for
+            # (typicaly 5 seconds, but can be configured to be less or more as needed)
+            time.sleep(self.__device_data_refresh_interval)
+
+        # Exit
+        self.__logger.debug("device data refresh loop terminated")
         return
 
     # =================================================================================================================
@@ -422,32 +458,6 @@ class DSP:
 
     # =================================================================================================================
 
-    def __device_data_refresh_loop(self) -> None:
-        """
-        Device data refresh loop. This constantly queries the device for attributes that cannot
-        be subscribed to, but nevertheless would be of interest to PyTesira users (e.g., active alarms)
-
-        We simply poll the device (with a configurable interval) for this...
-        """
-        self.__logger.info("starting device data refresh loop")
-        while not self.__exit.is_set():
-
-            # Query active faults
-            self.faults = self.__sync_command("DEVICE get activeFaultList").value
-
-            # Query network status
-            self.network = self.__sync_command("DEVICE get networkStatus").value
-
-            # Throttle query to the interval we're configured for
-            # (typicaly 5 seconds, but can be configured to be less or more as needed)
-            time.sleep(self.__device_data_refresh_interval)
-
-        # Exit
-        self.__logger.debug("device data refresh loop terminated")
-        return
-
-    # =================================================================================================================
-
     def __transport_send_and_wait(self, command : str, timeout : float = 3) -> TTPResponse:
         """
         Send TSP command to device and wait for response (with a timeout limit)
@@ -509,13 +519,3 @@ class DSP:
 
         # Out of newlines, so just return nothing
         return None
-
-    # =================================================================================================================
-
-    def reboot(self) -> None:
-        """
-        Send reboot (restart) command to device
-        """
-        assert self.ready, "DSP not ready"
-        self.__sync_command("DEVICE reboot")
-        return
