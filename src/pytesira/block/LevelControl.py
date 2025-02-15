@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from threading import Event
-from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.block.base_level_mute import BaseLevelMute
 import time
 import logging
 
-class LevelControl(Block):
+class LevelControl(BaseLevelMute):
 
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
@@ -34,32 +34,17 @@ class LevelControl(Block):
         try:
             assert init_helper is not None, "no helper present"
             self.__load_init_helper(init_helper)
-
         except Exception as e:
             # There's a problem, throw warning and then simply query
             self._logger.warning(f"cannot use initialization helper: {e}")
             self.__query_attributes()
 
-        # Setup subscriptions
-        self.register_subscriptions()
+        # Base subscriptions are already handled by the BaseLevelMute class
+        # but if we have anything extra, they can be initialized here
 
-        # Initialization helper (this will be used by export_init_helper() in the superclass
-        # to save initialization maps)
-        self._init_helper = {
-            "ganged" : self.ganged,
-            "channels" : self.channels
-        }
-        
-    # =================================================================================================================
-
-    def register_subscriptions(self) -> None:
-        """
-        (re)register subscriptions for this module. This should be called by each
-        module on init, and may be called again by the main thread if an interruption
-        in connectivity is detected (e.g., SSH disconnect-then-reconnect)
-        """
-        self._register_subscription(subscribe_type = "mutes", channel = None)
-        self._register_subscription(subscribe_type = "levels", channel = None)
+        # Extend initialization helper to include block-specific
+        # attributes we want to also save
+        self._init_helper["ganged"] = self.ganged
 
     # =================================================================================================================
 
@@ -68,9 +53,6 @@ class LevelControl(Block):
         Use initialization helper to set up attributes instead of querying
         """
         self.ganged = init_helper["ganged"]
-        self.channels = {}
-        for i, d in init_helper["channels"].items():
-            self.channels[str(i)] = d
 
     # =================================================================================================================
 
@@ -79,31 +61,10 @@ class LevelControl(Block):
         Handle incoming subscription callbacks
         """
 
-        # Mutes?
-        if response.subscription_type == "mutes":
-            for i, mute in enumerate(response.value):
-                idx = i + 1
-                if str(idx) in self.channels.keys():
-                    self.channels[str(idx)]["muted"] = bool(mute)
-                else:
-                    self._logger.error(f"mute response invalid index: {idx}")
-            self._logger.debug(f"mute state changed: {response.value}")
-
-        # Levels?
-        elif response.subscription_type == "levels":
-            for i, level in enumerate(response.value):
-                idx = i + 1
-                if str(idx) in self.channels.keys():
-                    self.channels[str(idx)]["level"]["current"] = float(level)
-                else:
-                    self._logger.error(f"level response invalid index: {idx}")
-            self._logger.debug(f"levels changed: {response.value}")
-
-        # Huh, this isn't handled?
-        else:
-            self._logger.debug(f"unhandled subscription callback: {response}")
-
-        # Call superclass handler to deal with callbacks
+        # Add any specific subscription callbacks here
+        # in this case, there's none
+        
+        # Process base subscription callbacks too!
         super().subscription_callback(response)
 
     # =================================================================================================================
@@ -112,37 +73,3 @@ class LevelControl(Block):
 
         # Ganged setup?
         self.ganged = bool(self._sync_command(f"{self._block_id} get ganged").value)
-
-        # How many channels?
-        num_channels = int(self._sync_command(f"{self._block_id} get numChannels").value)
-        self.channels = {}
-
-        # For each channel, what's the index and labels?
-        # NOTE: Tesira indices starts at 1, in some cases 0 is a special ID meaning all channels
-        for i in range(1, num_channels + 1):
-            self.channels[str(i)] = {
-                "index" : i,
-                "label" : self._sync_command(f"{self._block_id} get label {i}").value,
-                "level" : {
-                    "min" : self._sync_command(f"{self._block_id} get minLevel {i}").value,
-                    "max" : self._sync_command(f"{self._block_id} get maxLevel {i}").value,
-                },
-            }
-
-    # =================================================================================================================
-
-    def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Stub for set mute, for blocks that supports it
-        """
-        assert type(value) == bool, "invalid value type for set_mute"
-        return self._sync_command(f'"{self._block_id}" set mute {channel} {str(value).lower()}')
-
-    def set_level(self, value : float, channel : int = 0) -> TTPResponse:
-        """
-        Stub for set audio level, for blocks that supports it
-        """
-        assert type(value) == float, "invalid value type for set_level"
-        return self._sync_command(f'"{self._block_id}" set level {channel} {value}')
-
-    # =================================================================================================================
