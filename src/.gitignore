@@ -1,0 +1,3 @@
+# Config file and device blockmaps for testing
+config.yaml
+*.bmap
