@@ -33,7 +33,12 @@ class BaseLevelMute(Block):
 
         # Note: logger should be set up first by any block that is built on top of this
         # otherwise, we raise an exception
-        assert self._logger, "logger should be set up first!"
+        assert hasattr(self, "_logger"), "logger should be set up first!"
+
+        # How do we query channel names (might be different - this can be set by subclasses
+        # but if not, we use default)
+        if not hasattr(self, "_chan_label_key"):
+            self._chan_label_key = "label"
 
         # Initialize base class
         super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
@@ -121,7 +126,7 @@ class BaseLevelMute(Block):
         for i in range(1, num_channels + 1):
             self.channels[str(i)] = {
                 "index" : i,
-                "label" : self._sync_command(f"{self._block_id} get label {i}").value,
+                "label" : self._sync_command(f"{self._block_id} get {self._chan_label_key} {i}").value,
                 "level" : {
                     "min" : self._sync_command(f"{self._block_id} get minLevel {i}").value,
                     "max" : self._sync_command(f"{self._block_id} get maxLevel {i}").value,

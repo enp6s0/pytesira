@@ -19,9 +19,10 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 
 ## Supported blocks and features
 
-* `LevelControl`   : read/write mute status, set current level, read levels
+* `LevelControl`   : read/write mute status, read/write levels
 * `MuteControl`    : read/write mute status
 * `SourceSelector` : read/write mute status (output), set source and output levels, read levels, read and select active source
+* `DanteInput`     : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
 
 ## Simple usage example
 ```py
