@@ -38,7 +38,7 @@ class DSP:
     ) -> None:
 
         # PyTesira version
-        self.__version = "0.1.1"
+        self.__version = "0.1.2"
 
         # Ready for operation?
         self.ready = False
