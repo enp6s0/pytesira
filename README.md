@@ -41,7 +41,7 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 
 ## How to use
 
-Installing from the [PyPI release](https://pypi.org/project/pytesira/)
+Install latest version from the [PyPI release](https://pypi.org/project/pytesira/)
 ```sh
 pip3 install pytesira
 ```
