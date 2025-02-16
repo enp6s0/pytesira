@@ -114,68 +114,54 @@ class Ducker(Block):
 
     # =================================================================================================================
 
-    def __set_val_and_update(self, what : str, value : str|bool|float|int) -> tuple[str|bool|float|int, TTPResponse]:
-        """
-        Helper that sets a specific value and then updates internal state with a re-query.
-        Only works with simple stuff.
-
-        Returns a tuple of the updated value as well as TTPResponse
-        """
-        cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
-        read_value = self._sync_command(f'"{self._block_id}" get {what}').value
-
-        return read_value, cmd_result
-
-    # =================================================================================================================
-
     # Setter methods for flags and variables
 
     def set_bypass(self, value : bool) -> TTPResponse:
-        self.bypass, cmd_res = self.__set_val_and_update("bypass", value = value)
+        self.bypass, cmd_res = self._set_and_update_val("bypass", value = value)
         return cmd_res
 
     def set_mix_sense(self, value : bool) -> TTPResponse:
-        self.mix_sense, cmd_res = self.__set_val_and_update("mixSense", value = value)
+        self.mix_sense, cmd_res = self._set_and_update_val("mixSense", value = value)
         return cmd_res
 
     def set_sense_level(self, value : float) -> TTPResponse:
-        self.sense_level, cmd_res = self.__set_val_and_update("senseLevel", value = value)
+        self.sense_level, cmd_res = self._set_and_update_val("senseLevel", value = value)
         return cmd_res
 
     def set_sense_mute(self, value : bool) -> TTPResponse:
-        self.sense_mute, cmd_res = self.__set_val_and_update("senseMute", value = value)
+        self.sense_mute, cmd_res = self._set_and_update_val("senseMute", value = value)
         return cmd_res
 
     def set_threshold(self, value : float) -> TTPResponse:
-        self.threshold, cmd_res = self.__set_val_and_update("threshold", value = value)
+        self.threshold, cmd_res = self._set_and_update_val("threshold", value = value)
         return cmd_res
 
     def set_ducking_level(self, value : float) -> TTPResponse:
-        self.ducking_level, cmd_res = self.__set_val_and_update("duckingLevel", value = value)
+        self.ducking_level, cmd_res = self._set_and_update_val("duckingLevel", value = value)
         return cmd_res
 
     def set_attack_time(self, value : float) -> TTPResponse:
-        self.atack_time, cmd_res = self.__set_val_and_update("attackTime", value = value)
+        self.atack_time, cmd_res = self._set_and_update_val("attackTime", value = value)
         return cmd_res
 
     def set_release_time(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self.__set_val_and_update("releaseTime", value = value)
+        self.release_time, cmd_res = self._set_and_update_val("releaseTime", value = value)
         return cmd_res
 
     def set_input_mute(self, value : bool) -> TTPResponse:
-        self.release_time, cmd_res = self.__set_val_and_update("inputMute", value = value)
+        self.release_time, cmd_res = self._set_and_update_val("inputMute", value = value)
         return cmd_res
 
     def set_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self.__set_val_and_update("inputLevel", value = value)
+        self.release_time, cmd_res = self._set_and_update_val("inputLevel", value = value)
         return cmd_res
 
     def set_min_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self.__set_val_and_update("minInputLevel", value = value)
+        self.release_time, cmd_res = self._set_and_update_val("minInputLevel", value = value)
         return cmd_res
 
     def set_max_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self.__set_val_and_update("maxInputLevel", value = value)
+        self.release_time, cmd_res = self._set_and_update_val("maxInputLevel", value = value)
         return cmd_res   
 
     # =================================================================================================================
