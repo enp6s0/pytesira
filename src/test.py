@@ -4,6 +4,8 @@
 #
 from pytesira.dsp import DSP
 from pytesira.transport.ssh import SSH
+from pytesira.block.GraphicEqualizer import GraphicEqualizer
+
 import yaml, time, logging, sys
 
 # Logging configuration
@@ -26,5 +28,8 @@ device.connect(backend = SSH(
                         username = config["connection"]["username"], 
                         password = config["connection"]["password"],
                         host_key_check = False
-                ))
+                ),
+                skip_block_types = [
+                    GraphicEqualizer
+                ])
 device.save_block_map(output = "dsp_test.bmap")

@@ -70,7 +70,8 @@ class DSP:
     # =================================================================================================================
 
     def connect(self,
-        backend: Transport,             # Backend connection transport to the DSP itself (e.g., SSH, Telnet)
+        backend: Transport,                          # Backend connection transport to the DSP itself (e.g., SSH, Telnet)
+        skip_block_types: list[Block]|None = None,   # Block types to block from loading (can speed up initialization by disabling unused blocks)
     ) -> None:
         """
         Connect to the DSP
@@ -90,6 +91,13 @@ class DSP:
         # Start listen loop
         self.__rx_thread_handle = Thread(target = self.__rx_loop)
         self.__rx_thread_handle.start()
+
+        # Any blocks that we wouldn't want to load?
+        self.__skip_block_types = []
+        if skip_block_types is not None and type(skip_block_types) == list:
+            self.__skip_block_types = skip_block_types
+            self.__logger.info(f"Will skip loading {len(self.__skip_block_types)} DSP block type(s)")
+            self.__logger.debug(f"Skip load: {self.__skip_block_types}")
 
         # Outgoing command queue, this is used so each block can append to it with synchronous
         # DSP command strings it wanted to process, which the main thread (us!) will process
@@ -143,6 +151,12 @@ class DSP:
                 # Yes, we get a module handle for that block type
                 block_module = importlib.import_module(f"pytesira.block.{block_type}", "pytesira")
                 block_module_version = str(getattr(block_module, f"{block_type}").VERSION)
+
+                # Do we want to load this block?
+                if getattr(block_module, f"{block_type}") in self.__skip_block_types:
+                    self.__logger.info(f"'{block_id}' load skipped ({block_type} excluded by user preference)")
+                    self.__logger.debug(f"skip module load: {block_id} ({block_type}/{block_module}) (user preference)")
+                    continue
 
                 # Pre-mapped "attribute map / initialization helper" to pass along to module initialization?
                 block_module_init_helper = None
