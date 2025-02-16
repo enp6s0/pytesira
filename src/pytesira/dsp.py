@@ -38,13 +38,14 @@ class DSP:
     ) -> None:
 
         # PyTesira version
-        self.__version = "0.1.2"
+        self.__version = "0.2.0"
 
         # Ready for operation?
         self.ready = False
 
         # Get a local logger first
         self.__logger = logging.getLogger(__name__)
+        self.__logger.info(f"PyTesira version {self.__version}")
 
         # Exit event for child threads, to coordinate a clean shutdown
         self.__exit = Event()
@@ -75,6 +76,7 @@ class DSP:
         Connect to the DSP
         """
         assert not self.__connected.is_set(), "Already connected"
+        startup_time = time.perf_counter()
 
         # Start transport channel
         self.__transport = backend
@@ -182,8 +184,9 @@ class DSP:
         self.__device_data_refresh_loop_handle.start()
         
         # Now we're done - DSP object should now be ready to use!
+        started_in = time.perf_counter() - startup_time
         self.ready = True
-        self.__logger.info("DSP ready")
+        self.__logger.info(f"DSP ready (initialization took {round(started_in, 3)} seconds)")
 
     # =================================================================================================================
 

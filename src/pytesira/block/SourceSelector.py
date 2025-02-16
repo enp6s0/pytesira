@@ -37,7 +37,7 @@ class SourceSelector(Block):
 
         except Exception as e:
             # There's a problem, throw warning and then simply query
-            self._logger.warning(f"cannot use initialization helper: {e}")
+            self._logger.debug(f"cannot use initialization helper: {e}")
             self.__query_attributes()
 
         # Setup subscriptions

@@ -50,7 +50,7 @@ class BaseLevelMute(Block):
 
         except Exception as e:
             # There's a problem, throw warning and then simply query
-            self._logger.warning(f"cannot use initialization helper: {e}")
+            self._logger.debug(f"cannot use initialization helper: {e}")
             self.__query_base_attributes()
 
         # Setup subscriptions
@@ -124,9 +124,17 @@ class BaseLevelMute(Block):
         # For each channel, what's the index and labels?
         # NOTE: Tesira indices starts at 1, in some cases 0 is a special ID meaning all channels
         for i in range(1, num_channels + 1):
+
+            # Query label
+            label_query = self._sync_command(f"{self._block_id} get {self._chan_label_key} {i}")
+            if label_query.type == TTPResponseType.CMD_ERROR:
+                channel_label = ""
+            else:
+                channel_label = str(label_query.value).strip()
+
             self.channels[str(i)] = {
                 "index" : i,
-                "label" : self._sync_command(f"{self._block_id} get {self._chan_label_key} {i}").value,
+                "label" : channel_label,
                 "level" : {
                     "min" : self._sync_command(f"{self._block_id} get minLevel {i}").value,
                     "max" : self._sync_command(f"{self._block_id} get maxLevel {i}").value,

@@ -5,10 +5,13 @@ Control your Biamp Tesira DSPs directly from Python!
 
 > Obligatory disclaimer: this is an unofficial project which is not in any way affiliated with, or endorsed by, Biamp Systems
 
-## High level design
+## Architecture
 PyTesira adopts a modular design where the `DSP` class (`src/pytesira/dsp.py`) acts as the hub for everything.
 
-A `Transport` channel (such as `SSH`) is used for connection to the Tesira DSP device. Currently, only `SSH` is supported.
+![PyTesira architecture](./docs/img/pytesira-architecture.png)
+
+A `Transport` channel (such as `SSH`) is used for connection to the Tesira DSP device (using the Tesira Text Protocol). 
+Currently, `SSH` is the only supported transport (other transports are planned - feel free to submit a pull request also!).
 
 Upon connection, PyTesira tries to create a *block map* of available DSP blocks. For each supported block type, it also
 attempts to query that block's *attributes* (e.g., number of channels and their labels). This can be exported and re-imported
@@ -23,6 +26,11 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 * `MuteControl`    : read/write mute status
 * `SourceSelector` : read/write mute status (output), set source and output levels, read levels, read and select active source
 * `DanteInput`     : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
+* `DanteOutput`    : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
+
+## Tested on
+
+* TesiraFORTÉ DAN (software version `4.11.1.2`)
 
 ## Simple usage example
 ```py
@@ -39,6 +47,8 @@ device.connect(backend = SSH(
 
 # Note: at this point, we need to wait for the DSP to be fully connected/ready. 
 # To do so, we can simply check for the boolean flag `device.ready`
+while not device.ready:
+    pass
 
 # Save block map, which can then be loaded by specifying `block_map`
 # next time when we load the class like so: DSP(block_map = "dsp_test.bmap")
