@@ -116,15 +116,18 @@ class Block:
     # again, they should apply to every block in the same way, so no need to edit or override them
     # =================================================================================================================
 
-    def _set_and_update_val(self, what : str, value : str|bool|float|int) -> tuple[str|bool|float|int, TTPResponse]:
+    def _set_and_update_val(self, what : str, value : str|bool|float|int, channel : int|None = None) -> tuple[str|bool|float|int, TTPResponse]:
         """
         Helper that sets a specific value and then updates internal state with a re-query.
-        Only works with simple stuff (no channels!)
-
         Returns a tuple of the updated value as well as TTPResponse
         """
-        cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
-        read_value = self._sync_command(f'"{self._block_id}" get {what}').value
+        if channel is None:
+            # Simple case, no channels involved
+            cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
+            read_value = self._sync_command(f'"{self._block_id}" get {what}').value
+        else:
+            cmd_result = self._sync_command(f'"{self._block_id}" set {what} {channel} {value}')
+            read_value = self._sync_command(f'"{self._block_id}" get {what} {channel}').value
 
         return read_value, cmd_result
 
