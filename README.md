@@ -22,11 +22,18 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 
 ## Supported blocks and features
 
-* `LevelControl`   : read/write mute status, read/write levels
-* `MuteControl`    : read/write mute status
-* `SourceSelector` : read/write mute status (output), set source and output levels, read levels, read and select active source
-* `DanteInput`     : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
-* `DanteOutput`    : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
+* `LevelControl`     : read/write mute status, read/write levels
+* `MuteControl`      : read/write mute status
+* `SourceSelector`   : read/write mute status (output), set source and output levels, read levels, read and select active source
+* `DanteInput`       : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
+* `DanteOutput`      : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
+* `GraphicEqualizer` : read/write global bypass, read/write band bypass, read/write band gain
+
+## Supported device-level features
+
+* Start/stop system audio (`dsp.start_system_audio()` and `dsp.stop_system_audio()`)
+* Reboot device (`dsp.reboot()`)
+* Execute arbitrary commands (`dsp.device_command(command : str)`)
 
 ## Tested on
 
