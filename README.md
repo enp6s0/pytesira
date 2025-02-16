@@ -39,7 +39,14 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 
 * TesiraFORTÉ DAN (software version `4.11.1.2`)
 
-## Simple usage example
+## How to use
+
+Installing from the [PyPI release](https://pypi.org/project/pytesira/)
+```sh
+pip3 install pytesira
+```
+
+Simple usage example:
 ```py
 from pytesira.dsp import DSP
 from pytesira.transport.ssh import SSH
