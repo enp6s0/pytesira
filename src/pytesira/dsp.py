@@ -231,13 +231,32 @@ class DSP:
             
     # =================================================================================================================
 
-    def reboot(self) -> None:
+    def device_command(self, command : str) -> TTPResponse:
+        """
+        Send raw command to device
+        """
+        assert self.ready, "DSP not ready"
+        return self.__sync_command(command)
+
+    # =================================================================================================================
+
+    def start_system_audio(self) -> TTPResponse:
+        """
+        Send system audio start command to device
+        """
+        return self.device_command("DEVICE startAudio")
+
+    def stop_system_audio(self) -> TTPResponse:
+        """
+        Send system audio stop command to device
+        """
+        return self.device_command("DEVICE stopAudio")
+
+    def reboot(self) -> TTPResponse:
         """
         Send reboot (restart) command to device
         """
-        assert self.ready, "DSP not ready"
-        self.__sync_command("DEVICE reboot")
-        return
+        return self.device_command("DEVICE reboot")
 
     # =================================================================================================================
 
