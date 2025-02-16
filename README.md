@@ -29,6 +29,7 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 * `DanteOutput`      : read/write mute status, read/write levels, read/write invert setting, read/write fault-on-inactive setting
 * `GraphicEqualizer` : read/write global bypass, read/write band bypass, read/write band gain
 * `Ducker`           : read/write most attributes (except logic configuration)
+* `PassFilter`       : read all attributes, write cutoff frequency
 
 ## Supported device-level features
 

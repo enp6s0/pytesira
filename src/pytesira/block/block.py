@@ -116,6 +116,18 @@ class Block:
     # again, they should apply to every block in the same way, so no need to edit or override them
     # =================================================================================================================
 
+    def _set_and_update_val(self, what : str, value : str|bool|float|int) -> tuple[str|bool|float|int, TTPResponse]:
+        """
+        Helper that sets a specific value and then updates internal state with a re-query.
+        Only works with simple stuff (no channels!)
+
+        Returns a tuple of the updated value as well as TTPResponse
+        """
+        cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
+        read_value = self._sync_command(f'"{self._block_id}" get {what}').value
+
+        return read_value, cmd_result
+
     def _on_subscription_callback(self):
         """
         Handler for "on subscription callback": checks all locally registered callbacks
