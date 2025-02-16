@@ -128,6 +128,7 @@ class DSP:
         self.__subscriptions = {}
 
         # Then, for each object in the block map, we initialize it
+        self.__logger.info(f"initializing blocks, please wait")
         self.blocks = {}
         for block_id, block in self.__block_map.items():
 

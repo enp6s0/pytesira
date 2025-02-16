@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from pytesira.block.base_dante import BaseDante
 
-class DanteInput(BaseDante):
+class DanteOutput(BaseDante):
     """
-    Dante input DSP block
+    Dante output DSP block
     """
     VERSION = "0.1.0"
