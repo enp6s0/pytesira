@@ -71,7 +71,6 @@ class PassFilter(Block):
         and should save into the initialization helper to make next time loading
         at least a bit faster
         """
-
         # Max slope
         self.max_slope = self._sync_command(f"{self._block_id} get maxSlope").value
 
@@ -84,8 +83,8 @@ class PassFilter(Block):
         """
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
-        self.bypass = self._sync_command(f"{self._block_id} get bypass").value
-        self.frequency = self._sync_command(f"{self._block_id} get frequency").value
+        self.__bypass = self._sync_command(f"{self._block_id} get bypass").value
+        self.__cutoff_frequency = self._sync_command(f"{self._block_id} get frequency").value
 
     # =================================================================================================================
 
@@ -102,14 +101,16 @@ class PassFilter(Block):
 
     # =================================================================================================================
 
-    # Setter methods for flags and variables
+    @property
+    def bypass(self) -> bool:
+        return self.__bypass
+    @bypass.setter
+    def bypass(self, value) -> None:
+        self.__bypass, _ = self._set_and_update_val("bypass", value = value)
 
-    def set_bypass(self, value : bool) -> TTPResponse:
-        self.bypass, cmd_res = self._set_and_update_val("bypass", value = value)
-        return cmd_res
-
-    def set_cutoff_frequency(self, value : float) -> TTPResponse:
-        self.mix_sense, cmd_res = self._set_and_update_val("frequency", value = value)
-        return cmd_res
-
-    # =================================================================================================================
+    @property
+    def cutoff_frequency(self) -> float:
+        return self.__cutoff_frequency
+    @cutoff_frequency.setter
+    def cutoff_frequency(self, value) -> None:
+        self.__cutoff_frequency, _ = self._set_and_update_val("frequency", value = value)
