@@ -75,11 +75,15 @@ class BaseLevelMuteNoSubscription(Block):
 
         if data_type == "muted":
             new_val, cmd_res = self._set_and_update_val("mute", value = new_value, channel = channel_index)
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
             self.channels[channel_index]._muted(new_val)
             return cmd_res
 
         elif data_type == "level":
             new_val, cmd_res = self._set_and_update_val("level", value = new_value, channel = channel_index)
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
             self.channels[channel_index]._level(new_val)
             return cmd_res
 

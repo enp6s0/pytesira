@@ -49,6 +49,10 @@ class AudioOutput(BaseLevelMuteNoSubscription):
 
         if data_type == "inverted":
             new_val, cmd_res = self._set_and_update_val("invert", value = new_value, channel = channel_index)
+
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+
             self.channels[channel_index]._inverted(new_val)
             return cmd_res
 

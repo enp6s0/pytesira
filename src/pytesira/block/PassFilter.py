@@ -105,12 +105,22 @@ class PassFilter(Block):
     def bypass(self) -> bool:
         return self.__bypass
     @bypass.setter
+    
     def bypass(self, value : bool) -> None:
-        self.__bypass, _ = self._set_and_update_val("bypass", value = value)
+        new_val, cmd_res =self._set_and_update_val("bypass", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
+        else:
+            self.__bypass = new_val
 
     @property
     def cutoff_frequency(self) -> float:
         return self.__cutoff_frequency
+
     @cutoff_frequency.setter
     def cutoff_frequency(self, value : float) -> None:
-        self.__cutoff_frequency, _ = self._set_and_update_val("frequency", value = value)
+        new_val, cmd_res =self._set_and_update_val("frequency", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
+        else:
+            self.__cutoff_frequency = new_val

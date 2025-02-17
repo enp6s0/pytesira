@@ -77,11 +77,17 @@ class BaseLevelMute(Block):
         """
 
         if data_type == "muted":
-            return self._sync_command(f'"{self._block_id}" set mute {channel_index} {str(new_value).lower()}')
+            cmd_res = self._sync_command(f'"{self._block_id}" set mute {channel_index} {str(new_value).lower()}')
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+            return cmd_res
 
         elif data_type == "level":
-            return self._sync_command(f'"{self._block_id}" set level {channel_index} {new_value}')
-
+            cmd_res = self._sync_command(f'"{self._block_id}" set level {channel_index} {new_value}')
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+            return cmd_res
+            
         else:
             # Not supported (yet?)
             self._logger.warning(f"unhandled attribute change: {data_type}")
