@@ -53,14 +53,20 @@ Simple usage example:
 ```py
 from pytesira.dsp import DSP
 from pytesira.transport.ssh import SSH
+from pytesira.block.GraphicEqualizer import GraphicEqualizer
 
+# Connect to the device, but skip initializing GraphicEqualizer blocks
+# (as that's VERY slow - only enable if you really need that support!)
 device = DSP()
 device.connect(backend = SSH(
                         hostname = "tesira.device.lan",
                         username = "admin", 
                         password = "forgetme",
                         host_key_check = False # Bad option! Bad! Change this in production!
-                ))
+                ),
+                skip_block_types = [
+                    GraphicEqualizer
+                ])
 
 # Note: at this point, we need to wait for the DSP to be fully connected/ready. 
 # To do so, we can simply check for the boolean flag `device.ready`
