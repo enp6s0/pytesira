@@ -11,7 +11,7 @@ class SourceSelector(Block):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.1.0"
+    VERSION = "0.2.0"
 
     # =================================================================================================================
 
@@ -50,7 +50,9 @@ class SourceSelector(Block):
             "num_input" : self.num_input,
             "num_output" : self.num_output,
             "sources" : self.sources,
-            "output_level" : self.output_level,
+            "min_output_level" : self.min_output_level,
+            "max_output_level" : self.max_output_level,
+            "output_level" : self.__output_level,
         }
         
     # =================================================================================================================
@@ -78,10 +80,12 @@ class SourceSelector(Block):
         self.stereo = bool(init_helper["stereo"])
         self.num_input = int(init_helper["num_input"])
         self.num_output = int(init_helper["num_output"])
-        self.muted = False          # updated by subscription, not in helper
-        self.selected_source = 0    # updated by subscription, not in helper
+        self.__muted = False          # updated by subscription, not in helper
+        self.__selected_source = 0    # updated by subscription, not in helper
         self.sources = init_helper["sources"]
-        self.output_level = init_helper["output_level"]
+        self.__output_level = init_helper["output_level"]
+        self.min_output_level = init_helper["min_output_level"]
+        self.max_output_level = init_helper["max_output_level"]
 
     # =================================================================================================================
 
@@ -95,7 +99,7 @@ class SourceSelector(Block):
         self.num_output = int(self._sync_command(f"{self._block_id} get numOutputs").value)
 
         # Output muted?
-        self.muted = bool(self._sync_command(f"{self._block_id} get outputMute").value)
+        self.__muted = bool(self._sync_command(f"{self._block_id} get outputMute").value)
 
         # How many actual input channels (sources) and outputs?
         if self.stereo:
@@ -103,7 +107,7 @@ class SourceSelector(Block):
             self.num_output = int(self.num_output // 2)
 
         # Which channel is selected? (0 = nothing)
-        self.selected_source = 0
+        self.__selected_source = 0
 
         # For each source, they have index, label, and level attributes assigned
         # as well as a "selected" helper attribute to verify which source is currently selected
@@ -121,10 +125,8 @@ class SourceSelector(Block):
             }
 
         # We also allow control of output levels
-        self.output_level = {
-            "min" : self._sync_command(f"{self._block_id} get outputMinLevel").value,
-            "max" : self._sync_command(f"{self._block_id} get outputMaxLevel").value
-        }
+        self.min_output_level = self._sync_command(f"{self._block_id} get outputMinLevel").value
+        self.max_output_level = self._sync_command(f"{self._block_id} get outputMaxLevel").value
 
     # =================================================================================================================
 
@@ -141,21 +143,21 @@ class SourceSelector(Block):
 
         # Output mute?
         if response.subscription_type == "outputMute":
-            self.muted = bool(response.value)
+            self.__muted = bool(response.value)
             self._logger.debug(f"mute state = {response.value}")
 
         # Output level?
         elif response.subscription_type == "outputLevel":
-            self.output_level["current"] = float(response.value)
+            self.__output_level = float(response.value)
             self._logger.debug(f"output level = {response.value}")
 
         # Source selection?
         elif response.subscription_type == "sourceSelection":
-            self.selected_source = int(response.value)
+            self.__selected_source = int(response.value)
 
             # Update each sources too for easy reference
             for i in self.sources.keys():
-                self.sources[i]["selected"] = bool(str(i) == str(self.selected_source))
+                self.sources[i]["selected"] = bool(str(i) == str(self.__selected_source))
 
             self._logger.debug(f"source selection = {response.value}")
 
@@ -176,43 +178,57 @@ class SourceSelector(Block):
 
     # =================================================================================================================
 
-    def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Stub for set mute, for blocks that supports it
+    @property
+    def muted(self) -> bool:
+        return self.__muted
 
-        Note that we keep the channel parameter to preserve compatibility with
-        other set_mute's, but it's not used nor required in this case
-        """
-        assert type(value) == bool, "invalid value type for set_mute"
-        return self._sync_command(f'"{self._block_id}" set outputMute {str(value).lower()}')
+    @muted.setter
+    def muted(self, value : bool) -> None:
+        assert type(value) == bool, "invalid type for muted"
+        cmd_res = self._sync_command(f'"{self._block_id}" set outputMute {str(value).lower()}')
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
 
     # =================================================================================================================
 
-    def select_source(self, source : int = 0) -> TTPResponse:
+    @property
+    def selected_source(self) -> int:
+        return self.__selected_source
+
+    @selected_source.setter
+    def selected_source(self, value : int) -> None:
         """
         Select a specific source (or specify source = 0 to not select anything)
         """
-        assert type(source) == int, "invalid value type for source"
-        assert 0 <= source, "invalid value for source"
-        return self._sync_command(f'"{self._block_id}" set sourceSelection {source}')
+        assert type(value) == int, "invalid type for selected_source"
+        assert 0 <= value, "invalid value for selected_source"
+        cmd_res = self._sync_command(f'"{self._block_id}" set sourceSelection {value}')
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
+
+    # =================================================================================================================
+
+    @property
+    def output_level(self) -> float:
+        return self.__output_level
+
+    @output_level.setter
+    def output_level(self, value : float) -> None:
+        assert type(value) == float, "invalid type for value"
+        cmd_res = self._sync_command(f'"{self._block_id}" set outputLevel {value}')
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
 
     # =================================================================================================================
 
     def set_source_level(self, source : int, value : float) -> TTPResponse:
         """
         Set level for a specific source
+
+        TODO: migrate to Pythonic convention, may require abstraction class for source
+              similar to how channels are done elsewhere
         """
         assert type(source) == int, "invalid value type for source"
         assert 1 <= source, "invalid value for source"
         assert type(value) == float, "invalid value type for level"
         return self._sync_command(f'"{self._block_id}" set sourceLevel {source} {value}')
-
-    # =================================================================================================================
-
-    def set_level(self, value : float, channel : int = 0) -> TTPResponse:
-        """
-        Set output level. Note that we keep the calling signature of set_level,
-        but ignore channels here
-        """
-        assert type(value) == float, "invalid type for value"
-        return self._sync_command(f'"{self._block_id}" set outputLevel {value}')
