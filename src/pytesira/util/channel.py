@@ -28,6 +28,7 @@ class Channel:
         self.__label = str(schema["label"]).strip() if "label" in schema else None
         self.__muted = bool(schema["muted"]) if "muted" in schema else None
         self.__inverted = bool(schema["inverted"]) if "inverted" in schema else None
+        self.__fault_on_inactive = bool(schema["fault_on_inactive"]) if "fault_on_inactive" in schema else None
 
         # Current, maximum, and minimum levels
         # (these are modifiable and we handle custom setters accordingly)
@@ -50,6 +51,8 @@ class Channel:
             "label" : self.__label,
             "muted" : self.__muted,
             "level" : self.__level,
+            "inverted" : self.__inverted,
+            "fault_on_inactive" : self.__fault_on_inactive,
             "min_level" : self.__min_level,
             "max_level" : self.__max_level,
         }
@@ -109,6 +112,25 @@ class Channel:
         without triggering circular callbacks
         """
         self.__inverted = bool(value)
+
+    # =================================================================================================================
+
+    @property
+    def fault_on_inactive(self) -> bool:
+        return self.__fault_on_inactive
+
+    @fault_on_inactive.setter
+    def fault_on_inactive(self, value : bool) -> None:
+        assert type(value) == bool, "invalid fault_on_inactive type"
+        assert self.__fault_on_inactive is not None, "unsupported attribute fault_on_inactive"
+        self.__callback("fault_on_inactive", self.__index, value)
+
+    def _fault_on_inactive(self, value : bool) -> None:
+        """
+        Hidden updater so that the parent class can update our value
+        without triggering circular callbacks
+        """
+        self.__fault_on_inactive = bool(value)
 
     # =================================================================================================================
 

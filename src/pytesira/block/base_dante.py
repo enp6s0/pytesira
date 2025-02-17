@@ -14,7 +14,7 @@ class BaseDante(BaseLevelMute):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.1.0"
+    VERSION = "0.2.0"
 
     # =================================================================================================================
 
@@ -36,14 +36,8 @@ class BaseDante(BaseLevelMute):
         # Initialize base class
         super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
 
-        # If init helper isn't set, this is the time to query
-        try:
-            assert init_helper is not None, "no helper present"
-            self.__load_init_helper(init_helper)
-        except Exception as e:
-            # There's a problem, throw warning and then simply query
-            self._logger.debug(f"cannot use initialization helper: {e}")
-            self.__query_attributes()
+        # States that needs to be queried
+        self._query_status_attributes()
 
         # Base subscriptions are already handled by the BaseLevelMute class
         # so here we only initialize faultOnInactive subscribers
@@ -52,13 +46,48 @@ class BaseDante(BaseLevelMute):
 
     # =================================================================================================================
 
-    def __load_init_helper(self, init_helper : dict) -> None:
+    def _channel_change_callback(self, data_type : str, channel_index : int, new_value : bool|str|float|int) -> TTPResponse:
         """
-        Use initialization helper to set up attributes instead of querying
+        Send out commands when we get a change on one of our channels
+        """
 
-        Note: we don't have to call super() here, since super().__init__ has already taken care of doing so for us
+        if data_type == "inverted":
+            new_val, cmd_res = self._set_and_update_val("invert", value = new_value, channel = channel_index)
+            self.channels[channel_index]._inverted(new_val)
+            return cmd_res
+
+        elif data_type == "fault_on_inactive":
+            new_val, cmd_res = self._set_and_update_val("faultOnInactive", value = str(new_value).lower(), channel = channel_index)
+            self.channels[channel_index]._fault_on_inactive(new_val)
+            return cmd_res
+
+        else:
+            # We don't deal with this, so let our superclass handler handle it instead
+            super()._channel_change_callback(data_type, channel_index, new_value)
+
+    # =================================================================================================================
+
+    def _query_status_attributes(self) -> None:
         """
-        pass
+        Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
+        """
+
+        # Invert status
+        # (this in effect "extends" the channel object to support the inverted attribute,
+        #  if it's not already there)
+        for i in self.channels.keys():
+            self.channels[i]._inverted(self._sync_command(f"{self._block_id} get invert {i}").value)
+
+    def refresh_status(self) -> None:
+        """
+        Manually refresh/poll block status again
+
+        For now, the compromise for these blocks is we accept the possibility that their attributes
+        may be out of date, and let the end-user manually call a refresh when needed
+
+        TODO: might want to give them an option to set a refresh timer for these blocks?
+        """
+        self._query_status_attributes()
 
     # =================================================================================================================
 
@@ -69,34 +98,10 @@ class BaseDante(BaseLevelMute):
 
         # Fault-on-inactive status update callback
         if response.subscription_type == "faultOnInactive":
-            if str(response.subscription_channel_id) in self.channels.keys():
-                self.channels[str(response.subscription_channel_id)]["fault_on_inactive"] = bool(response.value)
+            if int(response.subscription_channel_id) in self.channels.keys():
+                self.channels[int(response.subscription_channel_id)]._fault_on_inactive(response.value)
 
         # Process base subscription callbacks too!
         super().subscription_callback(response)
-
-    # =================================================================================================================
-
-    def __query_attributes(self) -> None:
-        """
-        Query block-specific attributes that we're going to keep around
-        """
-        pass
-
-    # =================================================================================================================
-
-    def set_invert(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Set invert on a channel
-        """
-        assert type(value) == bool, "invalid value type for set_invert"
-        return self._sync_command(f'"{self._block_id}" set invert {channel} {str(value).lower()}')
-
-    def set_fault_on_inactive(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Set fault-on-inactive property of a channel
-        """
-        assert type(value) == bool, "invalid value type for set_fault_on_inactive"
-        return self._sync_command(f'"{self._block_id}" set faultOnInactive {channel} {str(value).lower()}')
 
     # =================================================================================================================
