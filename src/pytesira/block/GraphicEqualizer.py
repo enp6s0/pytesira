@@ -14,7 +14,7 @@ class GraphicEqualizer(Block):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.1.0"
+    VERSION = "0.2.0"
 
     # =================================================================================================================
 
@@ -75,7 +75,7 @@ class GraphicEqualizer(Block):
         # For each band, what's the minimum and maximum ranges?
         for i in range(1, num_bands + 1):
 
-            self.bands[str(i)] = {
+            self.bands[int(i)] = {
                 "index" : i,
                 "gain" : {
                     "min" : self._sync_command(f"{self._block_id} get minGain {i}").value,
@@ -91,11 +91,11 @@ class GraphicEqualizer(Block):
         """
 
         for i in self.bands.keys():
-            self.bands[str(i)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {i}").value
-            self.bands[str(i)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {i}").value
+            self.bands[int(i)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {i}").value
+            self.bands[int(i)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {i}").value
 
         # Bypass-all status
-        self.bypass = self._sync_command(f"{self._block_id} get bypassAll").value
+        self.__bypass = self._sync_command(f"{self._block_id} get bypassAll").value
 
     # =================================================================================================================
 
@@ -112,41 +112,50 @@ class GraphicEqualizer(Block):
 
     # =================================================================================================================
 
-    def set_bypass_all(self, value : bool) -> TTPResponse:
+    @property
+    def bypass(self) -> bool:
+        return self.__bypass
+
+    @bypass.setter
+    def bypass(self, value : bool) -> None:
         """
         Set 'bypass all channels' value
         """
-        assert type(value) == bool, "invalid value type for set_bypass_all"
+        assert type(value) == bool, "invalid value type for bypass"
 
         # To update the block status, we don't have a subscription, so we do a query (just to confirm)
         cmd_result = self._sync_command(f'"{self._block_id}" set bypassAll {str(value).lower()}')
-        self.bypass = self._sync_command(f"{self._block_id} get bypassAll").value
+        self.__bypass = self._sync_command(f"{self._block_id} get bypassAll").value
 
-        return cmd_result
+        # Raise an error if the original command didn't return OK for whatever reason
+        if cmd_result.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_result.value)
 
-    def set_bypass(self, value : bool, band : int = 0) -> TTPResponse:
+    def set_channel_bypass(self, value : bool, band : int = 0) -> TTPResponse:
         """
         Set per-channel bypass
+        TODO: Pythonic method migration, will require object
         """
         assert type(value) == bool, "invalid value type for set_bypass"
         assert type(band) == int, "invalid band type for set_bypass"
 
         # Same as above, send command and query
         cmd_result = self._sync_command(f'"{self._block_id}" set bypass {band} {str(value).lower()}')
-        self.bands[str(band)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {band}").value
+        self.bands[int(band)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {band}").value
 
         return cmd_result
 
     def set_band_gain(self, value : float, band : int = 0) -> TTPResponse:
         """
         Set gain on a band
+        TODO: Pythonic method integration, will require object
         """
         assert type(value) == float, "invalid value type for set_band_gain"
         assert type(band) == int, "invalid band type for set_band_gain"
 
         # Same as above again, send command and query
         cmd_result = self._sync_command(f'"{self._block_id}" set gain {band} {value}')
-        self.bands[str(band)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {band}").value
+        self.bands[int(band)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {band}").value
 
         return cmd_result
 
