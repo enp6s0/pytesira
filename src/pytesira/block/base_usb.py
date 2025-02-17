@@ -109,13 +109,3 @@ class BaseUSB(BaseLevelMuteNoSubscription):
 
         # Call superclass handler to deal with the callbacks we may have to make
         super().subscription_callback(response)
-
-    # =================================================================================================================
-
-    def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        set_mute is overridden for USB, since we apparently have two mute states - self-mute
-        (which is polling only) and host mute (which is subscription)
-        """
-        self.channels[int(channel)]["dsp_muted"], cmd_res = self._set_and_update_val("mute", value = value, channel = channel)
-        return cmd_res
