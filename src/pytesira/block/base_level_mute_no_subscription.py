@@ -53,8 +53,8 @@ class BaseLevelMuteNoSubscription(Block):
             self._logger.debug(f"cannot use initialization helper: {e}")
             self.__query_base_attributes()
 
-        # Query status attributes as well
-        self._query_status_attributes()
+        # We don't query status attributes here and let subclasses decide whether
+        # to just use ours, extend ours, or bypass ours...
 
         # Initialization helper base
         # (this will be used by export_init_helper() in the superclass to save initialization maps)

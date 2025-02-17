@@ -38,20 +38,16 @@ class AudioOutput(BaseLevelMuteNoSubscription):
         super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
 
         # Query status on start
-        # we bypass call to the method on the suuperclass here, as super.__init__ would have already
-        # taken care of that for us - no need to double query!
-        self._query_status_attributes(local_only = True)
+        self._query_status_attributes()
 
     # =================================================================================================================
 
-    def _query_status_attributes(self, local_only : bool = False) -> None:
+    def _query_status_attributes(self) -> None:
         """
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
-
-        # Update super as well (if not bypassed)
-        if not local_only:
-            super()._query_status_attributes()
+        # Query base status attributes too
+        super()._query_status_attributes()
 
         # Invert status
         for i in self.channels.keys():

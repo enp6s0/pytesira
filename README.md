@@ -31,6 +31,8 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 * `GraphicEqualizer` : read/write global bypass, read/write band bypass, read/write band gain
 * `Ducker`           : read/write most attributes (except logic configuration)
 * `PassFilter`       : read all attributes, write cutoff frequency
+* `UsbInput`         : read connected/streaming states, read/write DSP side level/mute, read host side mute/level
+* `UsbOutput`        : read connected/streaming states, read/write DSP side level/mute, read host side mute/level
 
 ## Supported device-level features
 
