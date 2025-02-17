@@ -15,6 +15,8 @@ import json
 import queue
 import logging
 import importlib
+import importlib.metadata
+from datetime import datetime
 from threading import Thread, Event
 
 class DSP:
@@ -38,7 +40,12 @@ class DSP:
     ) -> None:
 
         # PyTesira version
-        self.__version = "0.4.0"
+        try:
+            self.__version = importlib.metadata.version("pytesira")
+        except importlib.metadata.PackageNotFoundError:
+            # Heads up! This means that the version for local development changes daily
+            # and will cause DSP block map caches to expire - this is expected.
+            self.__version = f"local-dev-{datetime.today().strftime('%Y-%m-%d')}"
 
         # Ready for operation?
         self.ready = False
