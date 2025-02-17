@@ -76,28 +76,28 @@ class Ducker(Block):
         """
 
         # Mix sense (do we want to add sense audio to the mix?)
-        self.mix_sense = self._sync_command(f"{self._block_id} get mixSense").value
+        self.__mix_sense = self._sync_command(f"{self._block_id} get mixSense").value
 
         # Sense configuration
-        self.sense_level = self._sync_command(f"{self._block_id} get senseLevel").value
-        self.sense_mute = self._sync_command(f"{self._block_id} get senseMute").value
+        self.__sense_level = self._sync_command(f"{self._block_id} get senseLevel").value
+        self.__sense_mute = self._sync_command(f"{self._block_id} get senseMute").value
 
         # Threshold and ducking level
-        self.threshold = self._sync_command(f"{self._block_id} get threshold").value
-        self.ducking_level = self._sync_command(f"{self._block_id} get duckingLevel").value
+        self.__threshold = self._sync_command(f"{self._block_id} get threshold").value
+        self.__ducking_level = self._sync_command(f"{self._block_id} get duckingLevel").value
 
         # Attack and release times
-        self.attack_time = self._sync_command(f"{self._block_id} get attackTime").value
-        self.release_time = self._sync_command(f"{self._block_id} get releaseTime").value
+        self.__attack_time = self._sync_command(f"{self._block_id} get attackTime").value
+        self.__release_time = self._sync_command(f"{self._block_id} get releaseTime").value
 
         # Input stuff
-        self.input_mute = self._sync_command(f"{self._block_id} get inputMute").value
-        self.input_level = self._sync_command(f"{self._block_id} get inputLevel").value
-        self.min_input_level = self._sync_command(f"{self._block_id} get minInputLevel").value
-        self.max_input_level = self._sync_command(f"{self._block_id} get maxInputLevel").value
+        self.__input_mute = self._sync_command(f"{self._block_id} get inputMute").value
+        self.__input_level = self._sync_command(f"{self._block_id} get inputLevel").value
+        self.__min_input_level = self._sync_command(f"{self._block_id} get minInputLevel").value
+        self.__max_input_level = self._sync_command(f"{self._block_id} get maxInputLevel").value
 
         # Bypass status
-        self.bypass = self._sync_command(f"{self._block_id} get bypass").value
+        self.__bypass = self._sync_command(f"{self._block_id} get bypass").value
 
     # =================================================================================================================
 
@@ -114,54 +114,158 @@ class Ducker(Block):
 
     # =================================================================================================================
 
-    # Setter methods for flags and variables
+    @property
+    def bypass(self) -> bool:
+        return self.__bypass
 
-    def set_bypass(self, value : bool) -> TTPResponse:
-        self.bypass, cmd_res = self._set_and_update_val("bypass", value = value)
+    @bypass.setter
+    def bypass(self, value : bool) -> None:
+        self.__bypass, cmd_res = self._set_and_update_val("bypass", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_mix_sense(self, value : bool) -> TTPResponse:
-        self.mix_sense, cmd_res = self._set_and_update_val("mixSense", value = value)
+    # =================================================================================================================
+
+    @property
+    def mix_sense(self) -> bool:
+        return self.__mix_sense
+
+    @mix_sense.setter
+    def mix_sense(self, value : bool) -> None:
+        self.__mix_sense, cmd_res = self._set_and_update_val("mixSense", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_sense_level(self, value : float) -> TTPResponse:
-        self.sense_level, cmd_res = self._set_and_update_val("senseLevel", value = value)
+    # =================================================================================================================
+
+    @property
+    def sense_level(self) -> bool:
+        return self.__sense_level
+
+    @sense_level.setter
+    def sense_level(self, value : float) -> None:
+        self.__sense_level, cmd_res = self._set_and_update_val("senseLevel", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_sense_mute(self, value : bool) -> TTPResponse:
-        self.sense_mute, cmd_res = self._set_and_update_val("senseMute", value = value)
+    # =================================================================================================================
+
+    @property
+    def sense_mute(self) -> bool:
+        return self.__sense_mute
+
+    @sense_mute.setter
+    def sense_mute(self, value : bool) -> None:
+        self.__sense_mute, cmd_res = self._set_and_update_val("senseMute", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_threshold(self, value : float) -> TTPResponse:
-        self.threshold, cmd_res = self._set_and_update_val("threshold", value = value)
+    # =================================================================================================================
+
+    @property
+    def threshold(self) -> bool:
+        return self.__threshold
+
+    @threshold.setter
+    def threshold(self, value : float) -> None:
+        self.__threshold, cmd_res = self._set_and_update_val("threshold", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_ducking_level(self, value : float) -> TTPResponse:
-        self.ducking_level, cmd_res = self._set_and_update_val("duckingLevel", value = value)
+    # =================================================================================================================
+
+    @property
+    def ducking_level(self) -> bool:
+        return self.__ducking_level
+
+    @ducking_level.setter
+    def ducking_level(self, value : float) -> None:
+        self.__ducking_level, cmd_res = self._set_and_update_val("duckingLevel", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_attack_time(self, value : float) -> TTPResponse:
-        self.atack_time, cmd_res = self._set_and_update_val("attackTime", value = value)
+    # =================================================================================================================
+
+    @property
+    def attack_time(self) -> bool:
+        return self.__attack_time
+
+    @attack_time.setter
+    def attack_time(self, value : float) -> None:
+        self.__attack_time, cmd_res = self._set_and_update_val("attackTime", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_release_time(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self._set_and_update_val("releaseTime", value = value)
+    # =================================================================================================================
+
+    @property
+    def release_time(self) -> bool:
+        return self.__release_time
+
+    @release_time.setter
+    def release_time(self, value : float) -> None:
+        self.__release_time, cmd_res = self._set_and_update_val("releaseTime", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_input_mute(self, value : bool) -> TTPResponse:
-        self.release_time, cmd_res = self._set_and_update_val("inputMute", value = value)
+    # =================================================================================================================
+
+    @property
+    def input_mute(self) -> bool:
+        return self.__input_mute
+
+    @input_mute.setter
+    def input_mute(self, value : bool) -> None:
+        self.__input_mute, cmd_res = self._set_and_update_val("inputMute", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self._set_and_update_val("inputLevel", value = value)
+    # =================================================================================================================
+
+    @property
+    def input_level(self) -> bool:
+        return self.__input_level
+
+    @input_level.setter
+    def input_level(self, value : float) -> None:
+        self.__input_level, cmd_res = self._set_and_update_val("inputLevel", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_min_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self._set_and_update_val("minInputLevel", value = value)
+    # =================================================================================================================
+
+    @property
+    def min_input_level(self) -> bool:
+        return self.__min_input_level
+
+    @min_input_level.setter
+    def min_input_level(self, value : float) -> None:
+        self.__min_input_level, cmd_res = self._set_and_update_val("minInputLevel", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res
 
-    def set_max_input_level(self, value : float) -> TTPResponse:
-        self.release_time, cmd_res = self._set_and_update_val("maxInputLevel", value = value)
+    # =================================================================================================================
+
+    @property
+    def max_input_level(self) -> bool:
+        return self.__max_input_level
+
+    @max_input_level.setter
+    def max_input_level(self, value : float) -> None:
+        self.__max_input_level, cmd_res = self._set_and_update_val("maxInputLevel", value = value)
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
         return cmd_res   
 
     # =================================================================================================================
