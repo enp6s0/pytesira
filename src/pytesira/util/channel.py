@@ -46,7 +46,7 @@ class Channel:
         """
         Export schema to dict (allows re-initialization of object if needed)
         """
-        return {
+        schema = {
             "index" : self.__index,
             "label" : self.__label,
             "muted" : self.__muted,
@@ -57,18 +57,28 @@ class Channel:
             "max_level" : self.__max_level,
         }
 
+        # Clean out anything that's a None, as that means we don't have
+        # that attribute (or don't support it)
+        schema = {k: v for k, v in schema.items() if v is not None}
+
+        return schema
+
     # =================================================================================================================
     # Simple protected property getter, not intended for update by the API consumer
     # =================================================================================================================
 
     @property
     def index(self) -> int:
+        if self.__index is None:
+            raise AttributeError
         return self.__index
     def _index(self, value : int) -> None:
         self.__index = int(value)
 
     @property
     def label(self) -> str:
+        if self.__label is None:
+            raise AttributeError
         return self.__label
     def _label(self, value : str) -> None:
         self.__label = str(value)
@@ -79,6 +89,8 @@ class Channel:
 
     @property
     def muted(self) -> bool:
+        if self.__muted is None:
+            raise AttributeError
         return self.__muted
 
     @muted.setter
@@ -98,6 +110,8 @@ class Channel:
 
     @property
     def inverted(self) -> bool:
+        if self.__inverted is None:
+            raise AttributeError
         return self.__inverted
 
     @inverted.setter
@@ -117,6 +131,8 @@ class Channel:
 
     @property
     def fault_on_inactive(self) -> bool:
+        if self.__fault_on_inactive is None:
+            raise AttributeError
         return self.__fault_on_inactive
 
     @fault_on_inactive.setter
@@ -136,6 +152,8 @@ class Channel:
 
     @property
     def level(self) -> float:
+        if self.__level is None:
+            raise AttributeError
         return self.__level
 
     @level.setter
@@ -155,6 +173,8 @@ class Channel:
 
     @property
     def min_level(self) -> float:
+        if self.__min_level is None:
+            raise AttributeError
         return self.__min_level
 
     @min_level.setter
@@ -174,6 +194,8 @@ class Channel:
 
     @property
     def max_level(self) -> float:
+        if self.__max_level is None:
+            raise AttributeError
         return self.__max_level
 
     @max_level.setter
