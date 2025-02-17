@@ -92,17 +92,28 @@ print(device.network)
 # we first look at its channel status
 print(device.blocks["LevelTest"].channels)
 
-# Change level and mute states of a LevelControl block
-device.blocks["LevelTest"].set_level(channel = 1, value = -20.0)
-device.blocks["LevelTest"].set_mute(channel = 2, value = True)
+# Get and change level state for channel 2
+print(device.blocks["LevelTest"].channels[2].level)
+device.blocks["LevelTest"].channels[2].level = -12.0
+
+# Same thing with mute states
+print(device.blocks["LevelTest"].channels[2].muted)
+device.blocks["LevelTest"].channels[2].muted = True
 
 # Get information on a source selector block named `SourceTest`
 # (this includes all channels and their levels, as well as currently selected source)
 print(device.blocks["SourceTest"].sources)
 
-# Set source on a selector
-device.blocks["SourceTest"].select_source(source = 1)
+# Get currently selected source and select a new one
+# (source 0 = unselect everything)
+print(device.blocks["SourceTest"].selected_source)
+device.blocks["SourceTest"].selected_source = 4
 
-# Set source level on a selector
-device.blocks["SourceTest"].set_source_level(source = 1, value = 0.0)
+# Get and adjust cutoff frequency on a pass filter block
+print(device.blocks["PassFilterTest"].cutoff_frequency)
+device.blocks["PassFilterTest"].cutoff_frequency = 60.0
+
+# We can also bypass pass filters as needed
+device.blocks["PassFilterTest"].bypass = True
+
 ```
