@@ -77,18 +77,6 @@ class Block:
             "helper" : self._init_helper
         }
 
-    def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Stub for set mute, for blocks that supports it
-        """
-        raise NotImplementedError
-
-    def set_level(self, value : float, channel : int = 0) -> TTPResponse:
-        """
-        Stub for set audio level, for blocks that supports it
-        """
-        raise NotImplementedError
-
     # =================================================================================================================
     # Generally, there's no need to change or override methods below here, they apply to every block in the same way
     # =================================================================================================================

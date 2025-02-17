@@ -3,6 +3,7 @@ from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.channel import Channel
 import time
 import logging
 
@@ -60,9 +61,32 @@ class BaseLevelMuteNoSubscription(Block):
         # (this will be used by export_init_helper() in the superclass to save initialization maps)
         # (additional attributes may then be set by the subclass extending BaseLevelMute)
         self._init_helper = {
-            "channels" : self.channels
+            "channels" : {}
         }
+        for idx, c in self.channels.items():
+            self._init_helper["channels"][int(idx)] = c.schema
         
+    # =================================================================================================================
+
+    def _channel_change_callback(self, data_type : str, channel_index : int, new_value : bool|str|float|int) -> None:
+        """
+        Send out commands when we get a change on one of our channels
+        """
+
+        if data_type == "muted":
+            new_val, cmd_res = self._set_and_update_val("mute", value = new_value, channel = channel_index)
+            self.channels[channel_index]._muted(new_val)
+            return cmd_res
+
+        elif data_type == "level":
+            new_val, cmd_res = self._set_and_update_val("level", value = new_value, channel = channel_index)
+            self.channels[channel_index]._level(new_val)
+            return cmd_res
+
+        else:
+            # Not supported (yet?)
+            self._logger.warning(f"unhandled attribute change: {data_type}")
+
     # =================================================================================================================
 
     def __load_init_helper(self, init_helper : dict) -> None:
@@ -71,7 +95,7 @@ class BaseLevelMuteNoSubscription(Block):
         """
         self.channels = {}
         for i, d in init_helper["channels"].items():
-            self.channels[str(i)] = d
+            self.channels[int(i)] = Channel(self._block_id, int(i), self._channel_change_callback, d)
 
     # =================================================================================================================
 
@@ -80,8 +104,8 @@ class BaseLevelMuteNoSubscription(Block):
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
         for i in self.channels.keys():
-            self.channels[str(i)]["muted"] = self._sync_command(f"{self._block_id} get mute {i}").value
-            self.channels[str(i)]["level"]["current"] = self._sync_command(f"{self._block_id} get level {i}").value
+            self.channels[i]._muted(self._sync_command(f"{self._block_id} get mute {i}").value)
+            self.channels[i]._level(self._sync_command(f"{self._block_id} get level {i}").value)
 
     def refresh_status(self) -> None:
         """
@@ -125,29 +149,8 @@ class BaseLevelMuteNoSubscription(Block):
             # out how to make it play nice with block map caching. Potentially will need a callback 
             # so main thread can update block maps again with the new helper if we notice something
             # has changed, hmm...
-            self.channels[str(i)] = {
-                "index" : i,
+            self.channels[int(i)] = Channel(self._block_id, int(i), self._channel_change_callback, {
                 "label" : channel_label,
-                "level" : {
-                    "min" : self._sync_command(f"{self._block_id} get minLevel {i}").value,
-                    "max" : self._sync_command(f"{self._block_id} get maxLevel {i}").value,
-                },
-            }
-
-    # =================================================================================================================
-
-    def set_mute(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Set mute status (and update local)
-        """
-        self.channels[str(channel)]["muted"], cmd_res = self._set_and_update_val("mute", value = value, channel = channel)
-        return cmd_res
-
-    def set_level(self, value : float, channel : int = 0) -> TTPResponse:
-        """
-        Set current level for a channel
-        """
-        self.channels[str(channel)]["level"]["current"], cmd_res = self._set_and_update_val("level", value = value, channel = channel)
-        return cmd_res
-
-    # =================================================================================================================
+                "min_level" : self._sync_command(f"{self._block_id} get minLevel {i}").value,
+                "max_level" : self._sync_command(f"{self._block_id} get maxLevel {i}").value
+            })

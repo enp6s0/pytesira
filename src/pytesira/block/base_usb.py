@@ -31,6 +31,9 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
+        # Block ID
+        self._block_id = block_id
+
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
@@ -74,8 +77,8 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
         for i in self.channels.keys():
-            self.channels[str(i)]["dsp_muted"] = self._sync_command(f"{self._block_id} get mute {i}").value
-            self.channels[str(i)]["level"]["current"] = self._sync_command(f"{self._block_id} get level {i}").value
+            self.channels[i]._muted(self._sync_command(f"{self._block_id} get mute {i}").value)
+            self.channels[i]._level(self._sync_command(f"{self._block_id} get level {i}").value)
 
     # =================================================================================================================
 
@@ -96,13 +99,13 @@ class BaseUSB(BaseLevelMuteNoSubscription):
             self.streaming = response.value
 
         # Per channel status?
-        elif response.subscription_type == "hostMute":
-            if str(response.subscription_channel_id) in self.channels.keys():
-                self.channels[str(response.subscription_channel_id)]["host_muted"] = response.value
-
-        elif response.subscription_type == "hostVol":
-            if str(response.subscription_channel_id) in self.channels.keys():
-                self.channels[str(response.subscription_channel_id)]["level"]["host"] = response.value
+        # TODO: migrate to new channel object
+        #elif response.subscription_type == "hostMute":
+        #    if int(response.subscription_channel_id) in self.channels.keys():
+        #        self.channels[int(response.subscription_channel_id)]["host_muted"] = response.value
+        #elif response.subscription_type == "hostVol":
+        #    if int(response.subscription_channel_id) in self.channels.keys():
+        #        self.channels[int(response.subscription_channel_id)]["level"]["host"] = response.value
 
         # Call superclass handler to deal with the callbacks we may have to make
         super().subscription_callback(response)
@@ -114,5 +117,5 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         set_mute is overridden for USB, since we apparently have two mute states - self-mute
         (which is polling only) and host mute (which is subscription)
         """
-        self.channels[str(channel)]["dsp_muted"], cmd_res = self._set_and_update_val("mute", value = value, channel = channel)
+        self.channels[int(channel)]["dsp_muted"], cmd_res = self._set_and_update_val("mute", value = value, channel = channel)
         return cmd_res

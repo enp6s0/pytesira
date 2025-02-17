@@ -42,6 +42,22 @@ class AudioOutput(BaseLevelMuteNoSubscription):
 
     # =================================================================================================================
 
+    def _channel_change_callback(self, data_type : str, channel_index : int, new_value : bool|str|float|int) -> None:
+        """
+        Send out commands when we get a change on one of our channels
+        """
+
+        if data_type == "inverted":
+            new_val, cmd_res = self._set_and_update_val("invert", value = new_value, channel = channel_index)
+            self.channels[channel_index]._inverted(new_val)
+            return cmd_res
+
+        else:
+            # We don't deal with this, so let our superclass handler handle it instead
+            super()._channel_change_callback(data_type, channel_index, new_value)
+
+    # =================================================================================================================
+
     def _query_status_attributes(self) -> None:
         """
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
@@ -50,8 +66,10 @@ class AudioOutput(BaseLevelMuteNoSubscription):
         super()._query_status_attributes()
 
         # Invert status
+        # (this in effect "extends" the channel object to support the inverted attribute,
+        #  if it's not already there)
         for i in self.channels.keys():
-            self.channels[str(i)]["inverted"] = self._sync_command(f"{self._block_id} get invert {i}").value
+            self.channels[i]._inverted(self._sync_command(f"{self._block_id} get invert {i}").value)
 
     # =================================================================================================================
 
@@ -65,14 +83,3 @@ class AudioOutput(BaseLevelMuteNoSubscription):
         TODO: might want to give them an option to set a refresh timer for these blocks?
         """
         self._query_status_attributes()
-
-    # =================================================================================================================
-
-    def set_invert(self, value : bool, channel : int = 0) -> TTPResponse:
-        """
-        Set invert status for a channel
-        """
-        self.channels[str(channel)]["inverted"], cmd_res = self._set_and_update_val("level", value = value, channel = channel)
-        return cmd_res
-
-    # =================================================================================================================
