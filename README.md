@@ -116,4 +116,15 @@ device.blocks["PassFilterTest"].cutoff_frequency = 60.0
 # We can also bypass pass filters as needed
 device.blocks["PassFilterTest"].bypass = True
 
+# DSP blocks also come with callbacks! Here we'll demonstrate a simple callback,
+# which will get called whenever a value on the block changes (the entire block object
+# is passed back to us as a parameter):
+def test_cb(block):
+    print(type(block), block.channels)
+
+# Note that specifying a key is optional, but if set, allows for the callback
+# to be dynamically unregistered with unregister_callback() - or replaced by
+# simply registering another callback with the same key!
+device.blocks["LevelTest"].register_callback(callback = test_cb, key = "test_callback")
+
 ```
