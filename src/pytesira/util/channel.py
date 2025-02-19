@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from collections.abc import Callable
+from pytesira.util.indexed_object import IndexedObject
 
-class Channel:
+class Channel(IndexedObject):
     """
     Channel object for a block ID
     """
@@ -11,21 +12,14 @@ class Channel:
         Initialize a channel object
         """
 
-        # Which block do we belong to, and what index?
-        self.__block_id = str(block_id)
-        self.__index = int(index)
-        assert 1 <= self.__index, "invalid block index"
-
-        # Callback for when a value is updated, such that the parent block can actually
-        # handle updating this
-        self.__callback = callback
-        assert callable(callback), "callback for level not callable"
-
+        # Call superclass init. This also handles setting up self._callback for us,
+        # which we can directly call from here if needed.
+        #
         # Callbacks should accept the parameters: type, channel index, new value
         # which will be called if the value is updated programatically
+        super().__init__(block_id, index, callback, schema)
 
-        # Based on the schema dict provided, we can initialize our attributes
-        self.__label = str(schema["label"]).strip() if "label" in schema else None
+        # Based on the schema dict provided, we can initialize our extra attributes
         self.__muted = bool(schema["muted"]) if "muted" in schema else None
         self.__inverted = bool(schema["inverted"]) if "inverted" in schema else None
         self.__fault_on_inactive = bool(schema["fault_on_inactive"]) if "fault_on_inactive" in schema else None
@@ -46,42 +40,22 @@ class Channel:
         """
         Export schema to dict (allows re-initialization of object if needed)
         """
-        schema = {
-            "index" : self.__index,
-            "label" : self.__label,
-            "muted" : self.__muted,
-            "level" : self.__level,
-            "inverted" : self.__inverted,
-            "fault_on_inactive" : self.__fault_on_inactive,
-            "min_level" : self.__min_level,
-            "max_level" : self.__max_level,
-        }
+        # Get base schema
+        schema = super().schema
+
+        # Then we extend the schema to include our values
+        schema["muted"] = self.__muted
+        schema["level"] = self.__level
+        schema["min_level"] = self.__min_level
+        schema["max_level"] = self.__max_level
+        schema["inverted"] = self.__inverted
+        schema["fault_on_inactive"] = self.__fault_on_inactive
 
         # Clean out anything that's a None, as that means we don't have
         # that attribute (or don't support it)
         schema = {k: v for k, v in schema.items() if v is not None}
 
         return schema
-
-    # =================================================================================================================
-    # Simple protected property getter, not intended for update by the API consumer
-    # =================================================================================================================
-
-    @property
-    def index(self) -> int:
-        if self.__index is None:
-            raise AttributeError
-        return self.__index
-    def _index(self, value : int) -> None:
-        self.__index = int(value)
-
-    @property
-    def label(self) -> str:
-        if self.__label is None:
-            raise AttributeError
-        return self.__label
-    def _label(self, value : str) -> None:
-        self.__label = str(value)
 
     # =================================================================================================================
     # Values that are INTENDED to be changed by API consumers
@@ -97,7 +71,7 @@ class Channel:
     def muted(self, value : bool) -> None:
         assert type(value) == bool, "invalid muted type"
         assert self.__muted is not None, "unsupported attribute muted"
-        self.__callback("muted", self.__index, value)
+        self._callback("muted", self.index, value)
 
     def _muted(self, value : bool) -> None:
         """
@@ -118,7 +92,7 @@ class Channel:
     def inverted(self, value : bool) -> None:
         assert type(value) == bool, "invalid inverted type"
         assert self.__inverted is not None, "unsupported attribute inverted"
-        self.__callback("inverted", self.__index, value)
+        self._callback("inverted", self.index, value)
 
     def _inverted(self, value : bool) -> None:
         """
@@ -139,7 +113,7 @@ class Channel:
     def fault_on_inactive(self, value : bool) -> None:
         assert type(value) == bool, "invalid fault_on_inactive type"
         assert self.__fault_on_inactive is not None, "unsupported attribute fault_on_inactive"
-        self.__callback("fault_on_inactive", self.__index, value)
+        self._callback("fault_on_inactive", self.index, value)
 
     def _fault_on_inactive(self, value : bool) -> None:
         """
@@ -160,7 +134,7 @@ class Channel:
     def level(self, value : float) -> None:
         assert type(value) == float, "invalid level type"
         assert self.__level is not None, "unsupported attribute level"
-        self.__callback("level", self.__index, value)
+        self._callback("level", self.index, value)
 
     def _level(self, value : float) -> None:
         """
@@ -181,7 +155,7 @@ class Channel:
     def min_level(self, value : float) -> None:
         assert type(value) == float, "invalid min_level type"
         assert self.__level is not None, "unsupported attribute min_level"
-        self.__callback("min_level", self.__index, value)
+        self._callback("min_level", self.index, value)
 
     def _min_level(self, value : float) -> None:
         """
@@ -202,7 +176,7 @@ class Channel:
     def max_level(self, value : float) -> None:
         assert type(value) == float, "invalid level type"
         assert self.__level is not None, "unsupported attribute max_level"
-        self.__callback("max_level", self.__index, value)
+        self._callback("max_level", self.index, value)
 
     def _max_level(self, value : float) -> None:
         """
