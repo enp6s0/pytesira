@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 from collections.abc import Callable
-from pytesira.util.indexed_object_with_level import IndexedObjectWithLevel
+from pytesira.util.indexed_object import IndexedObject
 
-class Channel(IndexedObjectWithLevel):
+class IndexedObjectWithLevel(IndexedObject):
     """
-    Channel object for a block ID
+    Indexed object, with current, minimum, and maximum level extensions
     """
 
     def __init__(self, block_id : str, index : int, callback : Callable, schema : dict = {}) -> None:
@@ -19,15 +19,16 @@ class Channel(IndexedObjectWithLevel):
         # which will be called if the value is updated programatically
         super().__init__(block_id, index, callback, schema)
 
-        # Based on the schema dict provided, we can initialize our extra attributes
-        self.__muted = bool(schema["muted"]) if "muted" in schema else None
-        self.__inverted = bool(schema["inverted"]) if "inverted" in schema else None
-        self.__fault_on_inactive = bool(schema["fault_on_inactive"]) if "fault_on_inactive" in schema else None
+        # Current, maximum, and minimum levels
+        # (these are modifiable and we handle custom setters accordingly)
+        self.__level = float(schema["level"]) if "level" in schema else None
+        self.__min_level = float(schema["min_level"]) if "min_level" in schema else None
+        self.__max_level = float(schema["max_level"]) if "max_level" in schema else None
 
     # =================================================================================================================
 
     def __repr__(self) -> str:
-        return f"Channel: {self.schema}"
+        return f"IndexedObjectWithLevel: {self.schema}"
 
     @property
     def schema(self) -> dict:
@@ -38,9 +39,9 @@ class Channel(IndexedObjectWithLevel):
         schema = super().schema
 
         # Then we extend the schema to include our values
-        schema["muted"] = self.__muted
-        schema["inverted"] = self.__inverted
-        schema["fault_on_inactive"] = self.__fault_on_inactive
+        schema["level"] = self.__level
+        schema["min_level"] = self.__min_level
+        schema["max_level"] = self.__max_level
 
         # Clean out anything that's a None, as that means we don't have
         # that attribute (or don't support it)
@@ -53,62 +54,62 @@ class Channel(IndexedObjectWithLevel):
     # =================================================================================================================
 
     @property
-    def muted(self) -> bool:
-        if self.__muted is None:
+    def level(self) -> float:
+        if self.__level is None:
             raise AttributeError
-        return self.__muted
+        return self.__level
 
-    @muted.setter
-    def muted(self, value : bool) -> None:
-        assert type(value) == bool, "invalid muted type"
-        assert self.__muted is not None, "unsupported attribute muted"
-        self._callback("muted", self.index, value)
+    @level.setter
+    def level(self, value : float) -> None:
+        assert type(value) == float, "invalid level type"
+        assert self.__level is not None, "unsupported attribute level"
+        self._callback("level", self.index, value)
 
-    def _muted(self, value : bool) -> None:
+    def _level(self, value : float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
         """
-        self.__muted = bool(value)
+        self.__level = value
 
     # =================================================================================================================
 
     @property
-    def inverted(self) -> bool:
-        if self.__inverted is None:
+    def min_level(self) -> float:
+        if self.__min_level is None:
             raise AttributeError
-        return self.__inverted
+        return self.__min_level
 
-    @inverted.setter
-    def inverted(self, value : bool) -> None:
-        assert type(value) == bool, "invalid inverted type"
-        assert self.__inverted is not None, "unsupported attribute inverted"
-        self._callback("inverted", self.index, value)
+    @min_level.setter
+    def min_level(self, value : float) -> None:
+        assert type(value) == float, "invalid min_level type"
+        assert self.__level is not None, "unsupported attribute min_level"
+        self._callback("min_level", self.index, value)
 
-    def _inverted(self, value : bool) -> None:
+    def _min_level(self, value : float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
         """
-        self.__inverted = bool(value)
+        self.__min_level = value
 
     # =================================================================================================================
 
     @property
-    def fault_on_inactive(self) -> bool:
-        if self.__fault_on_inactive is None:
+    def max_level(self) -> float:
+        if self.__max_level is None:
             raise AttributeError
-        return self.__fault_on_inactive
+        return self.__max_level
 
-    @fault_on_inactive.setter
-    def fault_on_inactive(self, value : bool) -> None:
-        assert type(value) == bool, "invalid fault_on_inactive type"
-        assert self.__fault_on_inactive is not None, "unsupported attribute fault_on_inactive"
-        self._callback("fault_on_inactive", self.index, value)
+    @max_level.setter
+    def max_level(self, value : float) -> None:
+        assert type(value) == float, "invalid level type"
+        assert self.__level is not None, "unsupported attribute max_level"
+        self._callback("max_level", self.index, value)
 
-    def _fault_on_inactive(self, value : bool) -> None:
+    def _max_level(self, value : float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
         """
-        self.__fault_on_inactive = bool(value)
+        self.__max_level = value
