@@ -3,6 +3,7 @@ from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.source import Source
 import time
 import logging
 
@@ -11,7 +12,7 @@ class SourceSelector(Block):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.2.0"
+    VERSION = "0.3.0"
 
     # =================================================================================================================
 
@@ -23,6 +24,9 @@ class SourceSelector(Block):
         subscriptions: dict,            # subscription container on main thread
         init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
     ) -> None:
+
+        # Save block ID for callbacks and later changes
+        self.__block_id = block_id
 
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
@@ -49,11 +53,13 @@ class SourceSelector(Block):
             "stereo" : self.stereo,
             "num_input" : self.num_input,
             "num_output" : self.num_output,
-            "sources" : self.sources,
+            "sources" : {},
             "min_output_level" : self.min_output_level,
             "max_output_level" : self.max_output_level,
             "output_level" : self.__output_level,
         }
+        for idx, s in self.sources.items():
+            self._init_helper["sources"][int(idx)] = s.schema
         
     # =================================================================================================================
 
@@ -82,10 +88,13 @@ class SourceSelector(Block):
         self.num_output = int(init_helper["num_output"])
         self.__muted = False          # updated by subscription, not in helper
         self.__selected_source = 0    # updated by subscription, not in helper
-        self.sources = init_helper["sources"]
         self.__output_level = init_helper["output_level"]
         self.min_output_level = init_helper["min_output_level"]
         self.max_output_level = init_helper["max_output_level"]
+
+        self.sources = {}
+        for i, d in init_helper["sources"].items():
+            self.sources[int(i)] = Source(self.__block_id, int(i), self._source_attribute_change_callback, d)
 
     # =================================================================================================================
 
@@ -114,19 +123,31 @@ class SourceSelector(Block):
         # NOTE: Tesira indices starts at 1
         self.sources = {}
         for i in range(1, self.num_input + 1):
-            self.sources[str(i)] = {
-                "index" : i,
+            self.sources[int(i)] = Source(self.__block_id, int(i), self._source_attribute_change_callback, {
                 "label" : self._sync_command(f"{self._block_id} get label {i}").value,
-                "level" : {
-                    "min" : self._sync_command(f"{self._block_id} get sourceMinLevel {i}").value,
-                    "max" : self._sync_command(f"{self._block_id} get sourceMaxLevel {i}").value,
-                },
-                "selected" : False
-            }
+                "min_level" : self._sync_command(f"{self._block_id} get sourceMinLevel {i}").value,
+                "max_level" : self._sync_command(f"{self._block_id} get sourceMaxLevel {i}").value,
+            })
 
         # We also allow control of output levels
         self.min_output_level = self._sync_command(f"{self._block_id} get outputMinLevel").value
         self.max_output_level = self._sync_command(f"{self._block_id} get outputMaxLevel").value
+
+    # =================================================================================================================
+
+    def _source_attribute_change_callback(self, data_type : str, source_index : int, new_value : bool|str|float|int) -> TTPResponse:
+        """
+        Send out commands when we get an attribute change on one of our sources
+        """
+        if data_type == "level":
+            cmd_res = self._sync_command(f'"{self._block_id}" set sourceLevel {source_index} {new_value}')
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+            return cmd_res
+            
+        else:
+            # Not supported (yet?)
+            self._logger.warning(f"unhandled attribute change: {data_type}")
 
     # =================================================================================================================
 
@@ -154,17 +175,12 @@ class SourceSelector(Block):
         # Source selection?
         elif response.subscription_type == "sourceSelection":
             self.__selected_source = int(response.value)
-
-            # Update each sources too for easy reference
-            for i in self.sources.keys():
-                self.sources[i]["selected"] = bool(str(i) == str(self.__selected_source))
-
             self._logger.debug(f"source selection = {response.value}")
 
         # Source levels?
         elif response.subscription_type == "sourceLevel":
-            if str(response.subscription_channel_id) in self.sources.keys():
-                self.sources[str(response.subscription_channel_id)]["level"]["current"] = float(response.value)
+            if int(response.subscription_channel_id) in self.sources.keys():
+                self.sources[int(response.subscription_channel_id)]._level(float(response.value))
                 self._logger.debug(f"source level update on {response.subscription_channel_id} = {response.value}")
             else:
                 self._logger.error(f"source level invalid index: {idx}")
@@ -218,17 +234,3 @@ class SourceSelector(Block):
         cmd_res = self._sync_command(f'"{self._block_id}" set outputLevel {value}')
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
-
-    # =================================================================================================================
-
-    def set_source_level(self, source : int, value : float) -> TTPResponse:
-        """
-        Set level for a specific source
-
-        TODO: migrate to Pythonic convention, may require abstraction class for source
-              similar to how channels are done elsewhere
-        """
-        assert type(source) == int, "invalid value type for source"
-        assert 1 <= source, "invalid value for source"
-        assert type(value) == float, "invalid value type for level"
-        return self._sync_command(f'"{self._block_id}" set sourceLevel {source} {value}')
