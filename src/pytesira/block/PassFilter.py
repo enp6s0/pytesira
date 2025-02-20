@@ -5,6 +5,7 @@ from queue import Queue
 from pytesira.util.ttp_response import TTPResponseType
 import logging
 
+
 class PassFilter(Block):
     """
     Pass filter DSP block

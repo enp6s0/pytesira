@@ -5,6 +5,7 @@ from pytesira.util.ttp_response import TTPResponse
 from pytesira.block.base_level_mute import BaseLevelMute
 import logging
 
+
 class LevelControl(BaseLevelMute):
 
     # Define version of this block's code here. A mismatch between this

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from threading import Event
 
+
 class Transport:
     """
     PyTesira transport base class

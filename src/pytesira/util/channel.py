@@ -2,6 +2,7 @@
 from collections.abc import Callable
 from pytesira.util.indexed_object_with_level import IndexedObjectWithLevel
 
+
 class Channel(IndexedObjectWithLevel):
     """
     Channel object for a block ID

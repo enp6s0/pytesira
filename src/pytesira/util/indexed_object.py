@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from collections.abc import Callable
 
+
 class IndexedObject:
     """
     Indexed object (belonging to a DSP block)

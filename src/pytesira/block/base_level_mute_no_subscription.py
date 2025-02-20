@@ -5,6 +5,7 @@ from queue import Queue
 from pytesira.util.ttp_response import TTPResponseType
 from pytesira.util.channel import Channel
 
+
 class BaseLevelMuteNoSubscription(Block):
 
     """

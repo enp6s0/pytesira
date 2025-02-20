@@ -6,6 +6,7 @@ from pytesira.util.ttp_response import TTPResponse, TTPResponseType
 from pytesira.util.band import Band
 import logging
 
+
 class GraphicEqualizer(Block):
     """
     Graphic equalizer DSP block

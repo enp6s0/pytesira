@@ -2,6 +2,7 @@
 from collections.abc import Callable
 from pytesira.util.indexed_object_with_level import IndexedObjectWithLevel
 
+
 class Band(IndexedObjectWithLevel):
     """
     Band object for EQs

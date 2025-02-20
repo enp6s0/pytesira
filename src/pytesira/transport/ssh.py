@@ -6,6 +6,7 @@ import logging
 import traceback
 import time
 
+
 class SSH(Transport):
     """
     PyTesira SSH transport using Paramiko

@@ -5,6 +5,7 @@ from pytesira.util.ttp_response import TTPResponseType
 from pytesira.block.base_level_mute_no_subscription import BaseLevelMuteNoSubscription
 import logging
 
+
 class AudioOutput(BaseLevelMuteNoSubscription):
     """
     AudioOutput (built-in device output) block

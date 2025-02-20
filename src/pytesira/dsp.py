@@ -19,15 +19,13 @@ import importlib.metadata
 from datetime import datetime
 from threading import Thread, Event
 
-class DSP:
 
+class DSP:
     """
     PyTesira DSP class - the main thing!
 
-
     TODO:
         * Graceful handling of SSH connection restarts - should also trigger re-subscription on blocks
-
     """
 
     def __init__(self,

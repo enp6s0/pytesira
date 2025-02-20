@@ -6,6 +6,7 @@ from collections.abc import Callable
 import time
 import logging
 
+
 class Block:
 
     # Define version of this block's code here. A mismatch between this

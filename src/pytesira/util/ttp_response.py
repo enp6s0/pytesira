@@ -3,6 +3,7 @@ import re
 import logging
 from enum import Enum
 
+
 class TTPResponseType(Enum):
     """
     TTP response types
@@ -12,6 +13,7 @@ class TTPResponseType(Enum):
     CMD_OK_VALUE = 2        # OK response with attached value
     CMD_ERROR = 3           # Error response
     SUBSCRIPTION = 5        # Subscription response
+
 
 class TTPResponse():
     """

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pytesira.util.indexed_object_with_level import IndexedObjectWithLevel
 
+
 class Source(IndexedObjectWithLevel):
     """
     Channel object for source selector sources. This is basically IndexedObject with level,

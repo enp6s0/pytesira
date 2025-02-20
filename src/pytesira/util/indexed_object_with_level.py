@@ -2,6 +2,7 @@
 from collections.abc import Callable
 from pytesira.util.indexed_object import IndexedObject
 
+
 class IndexedObjectWithLevel(IndexedObject):
     """
     Indexed object, with current, minimum, and maximum level extensions

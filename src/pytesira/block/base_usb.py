@@ -5,6 +5,7 @@ from pytesira.util.ttp_response import TTPResponse
 from pytesira.block.base_level_mute_no_subscription import BaseLevelMuteNoSubscription
 import logging
 
+
 class BaseUSB(BaseLevelMuteNoSubscription):
     """
     Base block for USB I/O blocks

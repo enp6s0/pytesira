@@ -6,6 +6,7 @@ from pytesira.util.ttp_response import TTPResponse, TTPResponseType
 from pytesira.util.source import Source
 import logging
 
+
 class SourceSelector(Block):
 
     # Define version of this block's code here. A mismatch between this

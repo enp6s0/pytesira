@@ -6,6 +6,7 @@ from pytesira.util.channel import Channel
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
 import logging
 
+
 class MuteControl(Block):
 
     # Define version of this block's code here. A mismatch between this
