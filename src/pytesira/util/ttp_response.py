@@ -142,7 +142,7 @@ class TTPResponse:
         else:
             return f"Response [{self.type}]"
 
-    def __deep_parse_value(
+    def __deep_parse_value(  # noqa: C901
         self, raw: str, force_first_layer_as_dict: bool = False
     ) -> dict:
         """
