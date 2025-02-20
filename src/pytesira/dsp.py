@@ -462,27 +462,68 @@ class DSP:
 
         We simply poll the device (with a configurable interval) for this...
         """
-        self.__logger.info("starting device data refresh loop")
+
+        self.__logger.debug("preparing device data refresh tasks")
+
+        # Figure out what to query and when. Here, we want to spread out our queries as to not
+        # create a request spike all at once...
+        refreshes = []
+        refreshes.append(
+            {
+                "type": "query",
+                "command": "DEVICE get activeFaultList",
+                "attribute": "faults",
+            }
+        )
+        refreshes.append(
+            {
+                "type": "query",
+                "command": "DEVICE get networkStatus",
+                "attribute": "network",
+            }
+        )
+
+        # For each block that support subscriptions, we also queue that as a refresh
+        for block_id in self.blocks.keys():
+            if hasattr(self.blocks[block_id], "_register_base_subscriptions"):
+                refreshes.append(
+                    {
+                        "type": "subscription_refresh",
+                        "block": self.blocks[block_id],
+                    }
+                )
+
+        # How many tasks do we have? What should be the time spacing between them?
+        num_tasks = len(refreshes)
+        assert num_tasks > 0, "no device data refresh tasks"
+        time_spacing = round(self.__device_data_refresh_interval / num_tasks, 4)
+
+        # Log starting condition
+        self.__logger.info(
+            f"starting device data refresher ({num_tasks} tasks, spacing {time_spacing} sec)"
+        )
+
+        # Inifinite loop until we're told to exit
         while not self.__exit.is_set():
 
-            # Query active faults
-            self.faults = self.__sync_command("DEVICE get activeFaultList").value[0]
+            # For each item in the task list, see what it is and process
+            # accordingly
+            for refresh_task_item in refreshes:
 
-            # Query network status
-            self.network = self.__sync_command("DEVICE get networkStatus").value
+                # Data update query
+                if refresh_task_item["type"] == "query":
+                    setattr(
+                        self,
+                        refresh_task_item["attribute"],
+                        self.__sync_command(refresh_task_item["command"]).value,
+                    )
 
-            # First sleep, half the configured time (to spread out the queries a bit more)
-            time.sleep(self.__device_data_refresh_interval / 2)
+                # Subscription refresh
+                elif refresh_task_item["type"] == "subscription_refresh":
+                    refresh_task_item["block"]._register_base_subscriptions()
 
-            # For blocks that do support subscription, re-validate the subscriptions to make sure we're
-            # still subscribed, even after a system configuration change:
-            # (see: https://tesira-help.biamp.com/System_Control/Tesira_Text_Protocol/Subscriptions.htm)
-            for block_id in self.blocks.keys():
-                if hasattr(self.blocks[block_id], "_register_base_subscriptions"):
-                    self.blocks[block_id]._register_base_subscriptions()
-
-            # Sleep again to complete our configured data refresh interval
-            time.sleep(self.__device_data_refresh_interval / 2)
+                # Sleep to meet our time spacing requirements
+                time.sleep(time_spacing)
 
         # Exit
         self.__logger.debug("device data refresh loop terminated")
