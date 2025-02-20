@@ -112,7 +112,6 @@ class TTPResponse():
         else:
             raise ValueError(f"invalid TTP response type for input: {ttp_string}")
 
-
     def __repr__(self) -> str:
         """
         String representation of TTP responses
@@ -124,7 +123,6 @@ class TTPResponse():
                 return f"Response [{self.type}][{type(self.value)}] {self.value}"
         else:
             return f"Response [{self.type}]"
-
 
     def __deep_parse_value(self, raw : str, force_first_layer_as_dict : bool = False) -> dict:
         """
@@ -202,7 +200,6 @@ class TTPResponse():
             if raw.startswith('"') and raw.endswith('"'):
                 raw = str(val[1:-1]) 
             return self.__value_format(raw)
-
 
     def __value_format(self, val : float|int|bool|str) -> float|int|bool|str:
         """

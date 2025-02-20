@@ -106,5 +106,3 @@ class BaseDante(BaseLevelMute):
 
         # Process base subscription callbacks too!
         super().subscription_callback(response)
-
-    # =================================================================================================================
