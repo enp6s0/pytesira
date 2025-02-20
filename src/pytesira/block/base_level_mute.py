@@ -58,7 +58,7 @@ class BaseLevelMute(Block):
             self.__query_base_attributes()
 
         # Setup subscriptions
-        self.__register_base_subscriptions()
+        self._register_base_subscriptions()
 
         # Initialization helper base
         # (this will be used by export_init_helper() in the superclass to save initialization maps)
@@ -94,7 +94,7 @@ class BaseLevelMute(Block):
 
     # =================================================================================================================
 
-    def __register_base_subscriptions(self) -> None:
+    def _register_base_subscriptions(self) -> None:
         """
         (re)register subscriptions for this module. This should be called by each
         module on init, and may be called again by the main thread if an interruption

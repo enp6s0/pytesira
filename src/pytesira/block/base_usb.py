@@ -48,11 +48,11 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         self._query_status_attributes()
 
         # Register base subscriptions
-        self.__register_base_subscriptions()
+        self._register_base_subscriptions()
 
     # =================================================================================================================
 
-    def __register_base_subscriptions(self) -> None:
+    def _register_base_subscriptions(self) -> None:
         """
         (re)register subscriptions for this module. This should be called by each
         module on init, and may be called again by the main thread if an interruption

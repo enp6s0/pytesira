@@ -410,10 +410,17 @@ class DSP:
         while not self.__exit.is_set():
 
             # Query active faults
-            self.faults = self.__sync_command("DEVICE get activeFaultList").value
+            self.faults = self.__sync_command("DEVICE get activeFaultList").value[0]
 
             # Query network status
             self.network = self.__sync_command("DEVICE get networkStatus").value
+
+            # For blocks that do support subscription, re-validate the subscriptions to make sure we're
+            # still subscribed, even after a system configuration change:
+            # (see: https://tesira-help.biamp.com/System_Control/Tesira_Text_Protocol/Subscriptions.htm)
+            for block_id in self.blocks.keys():
+                if hasattr(self.blocks[block_id], "_register_base_subscriptions"):
+                    self.blocks[block_id]._register_base_subscriptions()
 
             # Throttle query to the interval we're configured for
             # (typicaly 5 seconds, but can be configured to be less or more as needed)
