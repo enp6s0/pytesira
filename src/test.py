@@ -6,7 +6,9 @@ from pytesira.dsp import DSP
 from pytesira.transport.ssh import SSH
 from pytesira.block.GraphicEqualizer import GraphicEqualizer
 
-import yaml, time, logging, sys
+import yaml
+import logging
+import sys
 
 # Logging configuration
 debug = False
@@ -16,7 +18,7 @@ try:
     if sys.argv[1] == "debug":
         logging.getLogger().setLevel(logging.DEBUG)
         debug = True
-except:
+except Exception as e:
     pass
 
 with open("config.yaml", "r") as f:

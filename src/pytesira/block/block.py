@@ -4,6 +4,7 @@ from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
 from collections.abc import Callable
 import time
+import logging
 
 class Block:
 

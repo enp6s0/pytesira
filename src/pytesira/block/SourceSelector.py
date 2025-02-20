@@ -183,7 +183,7 @@ class SourceSelector(Block):
                 self.sources[int(response.subscription_channel_id)]._level(float(response.value))
                 self._logger.debug(f"source level update on {response.subscription_channel_id} = {response.value}")
             else:
-                self._logger.error(f"source level invalid index: {idx}")
+                self._logger.error(f"source level invalid index: {response.subscription_channel_id}")
 
         # Huh, this isn't handled?
         else:

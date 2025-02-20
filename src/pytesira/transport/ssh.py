@@ -147,7 +147,7 @@ class SSH(Transport):
         try:
             self.__channel.close()
             self.__logger.debug(f"old SSH channel closed")
-        except:
+        except Exception as e:
             pass
 
         # Start from disconnected state

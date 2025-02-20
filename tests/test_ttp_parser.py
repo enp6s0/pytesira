@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Tests for the Tesira Text Protocol (TTP) parser
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
-import pprint
+
 
 def test_parse_ok():
     """
@@ -10,6 +10,7 @@ def test_parse_ok():
     r = TTPResponse("+OK")
     assert r.type == TTPResponseType.CMD_OK
 
+
 def test_parse_ok_long_spaces():
     """
     Test parsing of a basic OK message with a string that contains longer trailing spaces
@@ -17,6 +18,7 @@ def test_parse_ok_long_spaces():
     """
     r = TTPResponse("+OK                                           ")
     assert r.type == TTPResponseType.CMD_OK
+
 
 def test_parse_ok_simple_value():
     """
@@ -31,6 +33,7 @@ def test_parse_ok_simple_value():
             assert r.type == TTPResponseType.CMD_OK_VALUE
             assert r.value == v
             assert type(r.value) == type(v)
+
 
 def test_parse_subscription_list():
     """
@@ -63,6 +66,7 @@ def test_parse_subscription_list():
             assert type(r.value[1]) == type(v2)
             assert r.value[0] == v1
             assert r.value[1] == v2
+
 
 def test_parse_subscription_singlevalue():
     """
@@ -97,6 +101,7 @@ def test_parse_subscription_singlevalue():
         send_and_check(string_encoded, v)
         send_and_check(f'"{string_encoded}"', v)
 
+
 def test_value_formatter():
     """
     Test the value formatter. This is a bit hidden, so we
@@ -105,13 +110,13 @@ def test_value_formatter():
     Note: this is a standalone method and the self paramter
           isn't used, so we just pass None into it
     """
-    value_format = lambda v: TTPResponse._TTPResponse__value_format(None, v)
+    value_format = lambda v: TTPResponse._TTPResponse__value_format(None, v)  # noqa: E731
 
     # Boolean
     for v in ["true", "yes", "on"]:
-        assert value_format(v) == True
+        assert value_format(v) == True  # noqa: E712
     for v in ["false", "no", "off"]:
-        assert value_format(v) == False
+        assert value_format(v) == False  # noqa: E712
 
     # Integer
     for i in range(-10, 10):
@@ -128,11 +133,12 @@ def test_value_formatter():
     assert value_format("string") == "string"
     assert type(value_format("string")) == str
 
+
 def test_parse_active_fault_list_nofault():
     """
     Test parsing of active fault list
     """
-    RESPONSE = r'+OK "value":[{"id":INDICATOR_NONE_IN_DEVICE "name":"No fault in device" "faults":[] "serialNumber":"00000000"}]'
+    RESPONSE = r'+OK "value":[{"id":INDICATOR_NONE_IN_DEVICE "name":"No fault in device" "faults":[] "serialNumber":"00000000"}]'  # noqa: E501
     r = TTPResponse(RESPONSE)
     assert r.type == TTPResponseType.CMD_OK_VALUE
 
@@ -145,11 +151,12 @@ def test_parse_active_fault_list_nofault():
     assert rv["faults"] == []
     assert rv["serialNumber"] == 0
 
+
 def test_parse_active_fault_list_hasfault():
     """
     Test parsing of active fault list when there is a fault reported
     """
-    RESPONSE = r'+OK "value":[{"id":INDICATOR_MAJOR_IN_DEVICE "name":"Major Fault in Device" "faults":[{"id":FAULT_DANTE_FLOW_INACTIVE "name":"one or more Dante flows inactive"}] "serialNumber":"11122233"} {"id":INDICATOR_MAJOR_IN_SYSTEM "name":"Major Fault in System" "faults":[] "serialNumber":"11122233"}]'
+    RESPONSE = r'+OK "value":[{"id":INDICATOR_MAJOR_IN_DEVICE "name":"Major Fault in Device" "faults":[{"id":FAULT_DANTE_FLOW_INACTIVE "name":"one or more Dante flows inactive"}] "serialNumber":"11122233"} {"id":INDICATOR_MAJOR_IN_SYSTEM "name":"Major Fault in System" "faults":[] "serialNumber":"11122233"}]'  # noqa: E501
     r = TTPResponse(RESPONSE)
     assert r.type == TTPResponseType.CMD_OK_VALUE
 
@@ -168,11 +175,12 @@ def test_parse_active_fault_list_hasfault():
     assert dante_fault["id"] == "FAULT_DANTE_FLOW_INACTIVE"
     assert dante_fault["name"] == "one or more Dante flows inactive"
 
+
 def test_parse_network_status():
     """
     Test parsing of a network status response
     """
-    RESPONSE = r'+OK "value":{"schemaVersion":2 "hostname":"TestDSP" "defaultGatewayStatus":"0.0.0.0" "networkInterfaceStatusWithName":[{"interfaceId":"control" "networkInterfaceStatus":{"macAddress":"00:00:00:00:00:00" "linkStatus":LINK_1_GB "addressSource":STATIC "ip":"192.168.1.2" "netmask":"255.255.255.0" "dhcpLeaseObtainedDate":"N\/A" "dhcpLeaseExpiresDate":"N\/A" "gateway":"192.168.1.1"}}] "dnsStatus":{"primaryDNSServer":"192.168.1.3" "secondaryDNSServer":"0.0.0.0" "domainName":""} "mDNSEnabled":true "telnetDisabled":true "sshDisabled":false "networkPortMode":PORT_MODE_SEPARATE "rstpEnabled":false "httpsEnabled":false "igmpEnabled":false "switchPortMode":SWITCH_PORT_MODE_CONTROL_AND_MEDIA}'
+    RESPONSE = r'+OK "value":{"schemaVersion":2 "hostname":"TestDSP" "defaultGatewayStatus":"0.0.0.0" "networkInterfaceStatusWithName":[{"interfaceId":"control" "networkInterfaceStatus":{"macAddress":"00:00:00:00:00:00" "linkStatus":LINK_1_GB "addressSource":STATIC "ip":"192.168.1.2" "netmask":"255.255.255.0" "dhcpLeaseObtainedDate":"N\/A" "dhcpLeaseExpiresDate":"N\/A" "gateway":"192.168.1.1"}}] "dnsStatus":{"primaryDNSServer":"192.168.1.3" "secondaryDNSServer":"0.0.0.0" "domainName":""} "mDNSEnabled":true "telnetDisabled":true "sshDisabled":false "networkPortMode":PORT_MODE_SEPARATE "rstpEnabled":false "httpsEnabled":false "igmpEnabled":false "switchPortMode":SWITCH_PORT_MODE_CONTROL_AND_MEDIA}'  # noqa: E501
 
     # Get basic response
     r = TTPResponse(RESPONSE)
@@ -188,9 +196,9 @@ def test_parse_network_status():
     assert r.value["dnsStatus"]["secondaryDNSServer"] == "0.0.0.0"
 
     assert r.value["networkPortMode"] == "PORT_MODE_SEPARATE"
-    assert r.value["rstpEnabled"] == False
-    assert r.value["sshDisabled"] == False
-    assert r.value["telnetDisabled"] == True
+    assert r.value["rstpEnabled"] == False  # noqa: E712
+    assert r.value["sshDisabled"] == False  # noqa: E712
+    assert r.value["telnetDisabled"] == True  # noqa: E712
     assert r.value["switchPortMode"] == "SWITCH_PORT_MODE_CONTROL_AND_MEDIA"
 
     assert type(r.value["networkInterfaceStatusWithName"]) == list

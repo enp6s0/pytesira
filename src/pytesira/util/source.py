@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from collections.abc import Callable
 from pytesira.util.indexed_object_with_level import IndexedObjectWithLevel
 
 class Source(IndexedObjectWithLevel):
