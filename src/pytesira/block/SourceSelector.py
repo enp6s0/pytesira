@@ -59,7 +59,7 @@ class SourceSelector(Block):
         }
         for idx, s in self.sources.items():
             self._init_helper["sources"][int(idx)] = s.schema
-        
+
     # =================================================================================================================
 
     def register_subscriptions(self) -> None:
@@ -143,7 +143,7 @@ class SourceSelector(Block):
             if cmd_res.type != TTPResponseType.CMD_OK:
                 raise ValueError(cmd_res.value)
             return cmd_res
-            
+
         else:
             # Not supported (yet?)
             self._logger.warning(f"unhandled attribute change: {data_type}")

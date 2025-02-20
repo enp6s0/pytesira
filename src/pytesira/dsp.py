@@ -134,7 +134,7 @@ class DSP:
 
         # Information logging for device parameters
         self.__logger.info(f"Connected to '{self.hostname}' (S/N {self.serial_number}; software version {self.software_version}; {len(self.__dsp_aliases)} DSP aliases)")
-        
+
         # Discovered servers (in configuration)
         self.discovered_servers = self.__sync_command("DEVICE get discoveredServers").value
 
@@ -145,7 +145,7 @@ class DSP:
         self.__subscriptions = {}
 
         # Then, for each object in the block map, we initialize it
-        self.__logger.info(f"initializing blocks, please wait")
+        self.__logger.info("initializing blocks, please wait")
         self.blocks = {}
         for block_id, block in self.__block_map.items():
 
@@ -203,7 +203,7 @@ class DSP:
         # Start device attribute update loop
         self.__device_data_refresh_loop_handle = Thread(target = self.__device_data_refresh_loop)
         self.__device_data_refresh_loop_handle.start()
-        
+
         # Now we're done - DSP object should now be ready to use!
         started_in = time.perf_counter() - startup_time
         self.ready = True
@@ -253,7 +253,7 @@ class DSP:
                 "pytesira_version" : self.__version
             }, f, indent = 4)
         self.__logger.info(f"DSP block map saved: {output}")
-            
+
     # =================================================================================================================
 
     def device_command(self, command : str) -> TTPResponse:
@@ -318,7 +318,7 @@ class DSP:
 
             except Exception as e:
                 self.__logger.warning(f"could not load DSP block map: {e}")
-        
+
         # If block map isn't yet loaded, there's probably an error in the process somewhere,
         # so we proceed with live query to get latest info
         if not block_map_loaded:
@@ -383,7 +383,7 @@ class DSP:
                 # to callback for this, just write data to local synchronous
                 # command mailbox and we'll be done:
                 self.__sync_cmd_mailbox = response
-                self.__logger.debug(f"sync command response delivery: main loop sync_cmd_mailbox")
+                self.__logger.debug("sync command response delivery: main loop sync_cmd_mailbox")
             else:
                 # This is called from elsewhere, so we need to invoke
                 # the corresponding block's callback:

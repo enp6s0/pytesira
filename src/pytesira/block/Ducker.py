@@ -56,7 +56,7 @@ class Ducker(Block):
         """
         # Nothing to see here, move along...
         pass
-        
+
     # =================================================================================================================
 
     def __query_base_attributes(self) -> None:

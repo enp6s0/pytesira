@@ -89,7 +89,7 @@ class BaseUSB(BaseLevelMuteNoSubscription):
             self.host_muted = response.value
         elif response.subscription_type == "hostMasterVol":
             self.host_level = response.value
-        
+
         # Connected or streaming states?
         elif response.subscription_type == "connected":
             self.connected = response.value
@@ -98,10 +98,10 @@ class BaseUSB(BaseLevelMuteNoSubscription):
 
         # Per channel status?
         # TODO: migrate to new channel object
-        #elif response.subscription_type == "hostMute":
+        # elif response.subscription_type == "hostMute":
         #    if int(response.subscription_channel_id) in self.channels.keys():
         #        self.channels[int(response.subscription_channel_id)]["host_muted"] = response.value
-        #elif response.subscription_type == "hostVol":
+        # elif response.subscription_type == "hostVol":
         #    if int(response.subscription_channel_id) in self.channels.keys():
         #        self.channels[int(response.subscription_channel_id)]["level"]["host"] = response.value
 

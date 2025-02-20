@@ -62,7 +62,7 @@ class LevelControl(BaseLevelMute):
 
         # Add any specific subscription callbacks here
         # in this case, there's none
-        
+
         # Process base subscription callbacks too!
         super().subscription_callback(response)
 

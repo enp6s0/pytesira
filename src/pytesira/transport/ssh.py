@@ -146,7 +146,7 @@ class SSH(Transport):
         # If there's a lingering session, we'll try to close that if possible. If not - not a big deal:
         try:
             self.__channel.close()
-            self.__logger.debug(f"old SSH channel closed")
+            self.__logger.debug("old SSH channel closed")
         except Exception:
             pass
 
@@ -164,13 +164,13 @@ class SSH(Transport):
             timeout = self.__connection_timeout
         )
         self.__channel = self.__session.invoke_shell()
-        self.__logger.debug(f"channel started")
+        self.__logger.debug("channel started")
 
         # Try to connect and wait until we either get the welcome text, or reached timeout
         # limitations, whichever one comes first
         conn_init_time = time.perf_counter()
         welcomed = False
-        self.__logger.info(f"waiting for session establishment")
+        self.__logger.info("waiting for session establishment")
         while time.perf_counter() - conn_init_time < self.__connection_timeout:
             if self.__channel.active:
                 time.sleep(0.01)
@@ -179,14 +179,14 @@ class SSH(Transport):
                     if self.ttp_welcome in received:
                         welcomed = True
                         break
-        
+
         # If there's anything left in the buffer, clear it out (for good measure)
         while self.__channel.recv_ready():
             _ = self.__channel.recv(self.read_buffer_size).decode()
 
         if not welcomed:
             # Uh oh, we didn't get a valid response from the DSP
-            raise Exception(f"timeout waiting for session establishment")
+            raise Exception("timeout waiting for session establishment")
             self.__connected.clear()
         else:
             # Connection OK :)

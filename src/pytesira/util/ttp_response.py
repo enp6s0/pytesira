@@ -32,7 +32,7 @@ class TTPResponse():
 
         # Logger
         self.__logger = logging.getLogger(f"{__name__}")
-        
+
         # Input string cleaning (and sanity checks)
         ttp_string = str(ttp_string).strip()
         assert ttp_string != "", "empty string given"
@@ -68,7 +68,7 @@ class TTPResponse():
                     # If data is enclosed in double quotes, we strip that
                     if data.startswith('"') and data.endswith('"'):
                         data = data[1:-1]
-                    
+
                     # Parse data
                     self.value = self.__deep_parse_value(data)
 
@@ -111,7 +111,8 @@ class TTPResponse():
         # Unexpected input
         else:
             raise ValueError(f"invalid TTP response type for input: {ttp_string}")
-    
+
+
     def __repr__(self) -> str:
         """
         String representation of TTP responses
@@ -123,6 +124,7 @@ class TTPResponse():
                 return f"Response [{self.type}][{type(self.value)}] {self.value}"
         else:
             return f"Response [{self.type}]"
+
 
     def __deep_parse_value(self, raw : str, force_first_layer_as_dict : bool = False) -> dict:
         """
@@ -187,11 +189,11 @@ class TTPResponse():
                         current_token = ""
                 else:
                     current_token += char
-            
+
             # Add the last token to the list if it's not empty
             if current_token.strip():
                 tokens.append(current_token.strip())
-            
+
             # Recursively process each token
             return [self.__deep_parse_value(t) for t in tokens]
 
@@ -200,6 +202,7 @@ class TTPResponse():
             if raw.startswith('"') and raw.endswith('"'):
                 raw = str(val[1:-1]) 
             return self.__value_format(raw)
+
 
     def __value_format(self, val : float|int|bool|str) -> float|int|bool|str:
         """
@@ -218,7 +221,7 @@ class TTPResponse():
                 return float(val)
             else:
                 return int(val)
-        except ValueError as e:
+        except ValueError:
             # Can't be converted to floating point number, so it's probably
             # a boolean or string. We do a simple check here:
             if str(val).lower() in ["true", "yes", "on"]:

@@ -26,7 +26,7 @@ class Block:
         # we can also set it up again here
         if not self._logger:
             self._logger = logging.getLogger(f"{__name__}.{block_id}")
-        
+
         # Load setup variables
         self._block_id = str(block_id)
         self._exit = exit_flag

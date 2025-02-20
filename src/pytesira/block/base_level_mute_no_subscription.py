@@ -63,7 +63,7 @@ class BaseLevelMuteNoSubscription(Block):
         }
         for idx, c in self.channels.items():
             self._init_helper["channels"][int(idx)] = c.schema
-        
+
     # =================================================================================================================
 
     def _channel_change_callback(self, data_type : str, channel_index : int, new_value : bool|str|float|int) -> None:

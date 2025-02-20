@@ -54,7 +54,7 @@ class MuteControl(Block):
         }
         for idx, c in self.channels.items():
             self._init_helper["channels"][int(idx)] = c.schema
-        
+
     # =================================================================================================================
 
     def _channel_change_callback(self, data_type : str, channel_index : int, new_value : bool|str|float|int) -> TTPResponse:
@@ -66,7 +66,7 @@ class MuteControl(Block):
             if cmd_res.type != TTPResponseType.CMD_OK:
                 raise ValueError(cmd_res.value)
             return cmd_res
-            
+
         else:
             # Not supported (yet?)
             self._logger.warning(f"unhandled attribute change: {data_type}")

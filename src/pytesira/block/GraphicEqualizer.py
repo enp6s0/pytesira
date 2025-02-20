@@ -125,7 +125,7 @@ class GraphicEqualizer(Block):
             if cmd_res.type != TTPResponseType.CMD_OK:
                 raise ValueError(cmd_res.value)
             return cmd_res
-            
+
         # Bypass change
         elif data_type == "bypass":
 
@@ -168,7 +168,7 @@ class GraphicEqualizer(Block):
 
         # To update the block status, we don't have a subscription, so we do a query (just to confirm)
         self.__bypass, cmd_result = self._set_and_update_val("bypassAll", str(value).lower())
-        
+
         # Raise an error if the original command didn't return OK for whatever reason
         if cmd_result.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_result.value)
