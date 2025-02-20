@@ -128,7 +128,7 @@ def test_value_formatter():
     assert value_format("string") == "string"
     assert type(value_format("string")) == str
 
-def test_parse_active_fault_list():
+def test_parse_active_fault_list_nofault():
     """
     Test parsing of active fault list
     """
@@ -144,6 +144,29 @@ def test_parse_active_fault_list():
     assert rv["name"] == "No fault in device"
     assert rv["faults"] == []
     assert rv["serialNumber"] == 0
+
+def test_parse_active_fault_list_hasfault():
+    """
+    Test parsing of active fault list when there is a fault reported
+    """
+    RESPONSE = r'+OK "value":[{"id":INDICATOR_MAJOR_IN_DEVICE "name":"Major Fault in Device" "faults":[{"id":FAULT_DANTE_FLOW_INACTIVE "name":"one or more Dante flows inactive"}] "serialNumber":"11122233"} {"id":INDICATOR_MAJOR_IN_SYSTEM "name":"Major Fault in System" "faults":[] "serialNumber":"11122233"}]'
+    r = TTPResponse(RESPONSE)
+    assert r.type == TTPResponseType.CMD_OK_VALUE
+
+    assert type(r.value) == list
+    assert len(r.value) == 1
+    
+    rv = r.value[0]
+    assert rv["id"] == "INDICATOR_MAJOR_IN_DEVICE"
+    assert rv["name"] == "Major Fault in Device"
+    assert rv["serialNumber"] == 11122233
+
+    assert type(rv["faults"]) == list
+    assert len(rv["faults"]) == 1
+
+    dante_fault = rv["faults"][0]
+    assert dante_fault["id"] == "FAULT_DANTE_FLOW_INACTIVE"
+    assert dante_fault["name"] == "one or more Dante flows inactive"
 
 def test_parse_network_status():
     """

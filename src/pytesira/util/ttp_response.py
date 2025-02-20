@@ -155,7 +155,11 @@ class TTPResponse():
                     val = str(val[1:-1]) 
 
                 # Recursively resolve value items
-                cleaned[key] = self.__deep_parse_value(val)
+                # HACK: if key is already in what we're going to return, we ignore
+                # repeated keys that comes later. This apparently causes issues in
+                # parsing the system error list with two "fault" keys...
+                if key not in cleaned:
+                    cleaned[key] = self.__deep_parse_value(val)
 
             return cleaned
 
