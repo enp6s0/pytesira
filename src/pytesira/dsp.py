@@ -471,6 +471,9 @@ class DSP:
             # Query network status
             self.network = self.__sync_command("DEVICE get networkStatus").value
 
+            # First sleep, half the configured time (to spread out the queries a bit more)
+            time.sleep(self.__device_data_refresh_interval / 2)
+
             # For blocks that do support subscription, re-validate the subscriptions to make sure we're
             # still subscribed, even after a system configuration change:
             # (see: https://tesira-help.biamp.com/System_Control/Tesira_Text_Protocol/Subscriptions.htm)
@@ -478,9 +481,8 @@ class DSP:
                 if hasattr(self.blocks[block_id], "_register_base_subscriptions"):
                     self.blocks[block_id]._register_base_subscriptions()
 
-            # Throttle query to the interval we're configured for
-            # (typicaly 5 seconds, but can be configured to be less or more as needed)
-            time.sleep(self.__device_data_refresh_interval)
+            # Sleep again to complete our configured data refresh interval
+            time.sleep(self.__device_data_refresh_interval / 2)
 
         # Exit
         self.__logger.debug("device data refresh loop terminated")
