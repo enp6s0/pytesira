@@ -3,6 +3,7 @@ from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.band import Band
 import time
 import logging
 
@@ -14,7 +15,7 @@ class GraphicEqualizer(Block):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.2.0"
+    VERSION = "0.3.0"
 
     # =================================================================================================================
 
@@ -26,6 +27,9 @@ class GraphicEqualizer(Block):
         subscriptions: dict,            # subscription container on main thread
         init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
     ) -> None:
+
+        # Block ID for later use
+        self._block_id = block_id
 
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
@@ -46,10 +50,12 @@ class GraphicEqualizer(Block):
         # Query status on start, too
         self.__query_status_attributes()
 
-        # Initialization helper base
+        # Initialization helper
         self._init_helper = {
-            "bands" : self.bands
+            "bands" : {}
         }
+        for idx, b in self.bands.items():
+            self._init_helper["bands"][int(idx)] = b.schema
 
     # =================================================================================================================
 
@@ -57,8 +63,10 @@ class GraphicEqualizer(Block):
         """
         Use initialization helper to set up attributes instead of querying
         """
-        self.bands = init_helper["bands"]
-        
+        self.bands = {}
+        for i, d in init_helper["bands"].items():
+            self.bands[int(i)] = Band(self._block_id, int(i), self.__attribute_change_callback, d)
+
     # =================================================================================================================
 
     def __query_base_attributes(self) -> None:
@@ -72,16 +80,9 @@ class GraphicEqualizer(Block):
         num_bands = int(self._sync_command(f"{self._block_id} get numBands").value)
         self.bands = {}
 
-        # For each band, what's the minimum and maximum ranges?
+        # Create a "blank slate" band for each EQ band
         for i in range(1, num_bands + 1):
-
-            self.bands[int(i)] = {
-                "index" : i,
-                "gain" : {
-                    "min" : self._sync_command(f"{self._block_id} get minGain {i}").value,
-                    "max" : self._sync_command(f"{self._block_id} get maxGain {i}").value,
-                },
-            }
+            self.bands[int(i)] = Band(self._block_id, int(i), self.__attribute_change_callback, {})
 
     def __query_status_attributes(self) -> None:
         """
@@ -90,12 +91,55 @@ class GraphicEqualizer(Block):
         but may have to, in case the values are changed by external control...
         """
 
+        # Get attributes for each band
         for i in self.bands.keys():
-            self.bands[int(i)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {i}").value
-            self.bands[int(i)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {i}").value
+            self.bands[int(i)]._level(self._sync_command(f"{self._block_id} get gain {i}").value)
+            self.bands[int(i)]._min_level(self._sync_command(f"{self._block_id} get minGain {i}").value)
+            self.bands[int(i)]._max_level(self._sync_command(f"{self._block_id} get maxGain {i}").value)
+            self.bands[int(i)]._bypass(self._sync_command(f"{self._block_id} get bypass {i}").value)
 
         # Bypass-all status
         self.__bypass = self._sync_command(f"{self._block_id} get bypassAll").value
+
+    # =================================================================================================================
+
+    def __attribute_change_callback(self, data_type : str, source_index : int, new_value : bool|str|float|int) -> TTPResponse:
+        """
+        Send out commands when we get an attribute change on one of our sources
+        """
+
+        # Gain changes
+        if data_type in ["level", "min_level", "max_level"]:
+
+            # Translation on what to set
+            _tdict = {
+                "level" : "gain",
+                "min_level" : "minGain",
+                "max_level" : "maxGain"
+            }
+            to_set = _tdict[str(data_type).lower().strip()]
+
+            # Update value and local cache of the same value (using the "magic" updater method)
+            new_val, cmd_res = self._set_and_update_val(to_set, new_value, source_index)
+            getattr(self.bands[int(source_index)], f"_{data_type}")(new_val)
+
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+            return cmd_res
+            
+        # Bypass change
+        elif data_type == "bypass":
+
+            new_val, cmd_res = self._set_and_update_val("bypass", str(new_value).lower(), source_index)
+            self.bands[int(source_index)]._bypass(new_val)
+
+            if cmd_res.type != TTPResponseType.CMD_OK:
+                raise ValueError(cmd_res.value)
+            return cmd_res
+
+        else:
+            # Not supported (yet?)
+            self._logger.warning(f"unhandled attribute change: {data_type}")
 
     # =================================================================================================================
 
@@ -124,39 +168,8 @@ class GraphicEqualizer(Block):
         assert type(value) == bool, "invalid value type for bypass"
 
         # To update the block status, we don't have a subscription, so we do a query (just to confirm)
-        cmd_result = self._sync_command(f'"{self._block_id}" set bypassAll {str(value).lower()}')
-        self.__bypass = self._sync_command(f"{self._block_id} get bypassAll").value
-
+        self.__bypass, cmd_result = self._set_and_update_val("bypassAll", str(value).lower())
+        
         # Raise an error if the original command didn't return OK for whatever reason
         if cmd_result.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_result.value)
-
-    def set_channel_bypass(self, value : bool, band : int = 0) -> TTPResponse:
-        """
-        Set per-channel bypass
-        TODO: Pythonic method migration, will require object
-        """
-        assert type(value) == bool, "invalid value type for set_bypass"
-        assert type(band) == int, "invalid band type for set_bypass"
-
-        # Same as above, send command and query
-        cmd_result = self._sync_command(f'"{self._block_id}" set bypass {band} {str(value).lower()}')
-        self.bands[int(band)]["bypass"] = self._sync_command(f"{self._block_id} get bypass {band}").value
-
-        return cmd_result
-
-    def set_band_gain(self, value : float, band : int = 0) -> TTPResponse:
-        """
-        Set gain on a band
-        TODO: Pythonic method integration, will require object
-        """
-        assert type(value) == float, "invalid value type for set_band_gain"
-        assert type(band) == int, "invalid band type for set_band_gain"
-
-        # Same as above again, send command and query
-        cmd_result = self._sync_command(f'"{self._block_id}" set gain {band} {value}')
-        self.bands[int(band)]["gain"]["current"] = self._sync_command(f"{self._block_id} get gain {band}").value
-
-        return cmd_result
-
-    # =================================================================================================================
