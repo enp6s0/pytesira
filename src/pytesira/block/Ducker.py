@@ -18,20 +18,30 @@ class Ducker(Block):
 
     # =================================================================================================================
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
         # Initialize base class
-        super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
+        super().__init__(
+            block_id,
+            exit_flag,
+            connected_flag,
+            command_queue,
+            subscriptions,
+            init_helper,
+        )
 
         # If init helper isn't set, this is the time to query
         try:
@@ -51,7 +61,7 @@ class Ducker(Block):
 
     # =================================================================================================================
 
-    def __load_init_helper(self, init_helper : dict) -> None:
+    def __load_init_helper(self, init_helper: dict) -> None:
         """
         Use initialization helper to set up attributes instead of querying
         """
@@ -79,22 +89,36 @@ class Ducker(Block):
         self.__mix_sense = self._sync_command(f"{self._block_id} get mixSense").value
 
         # Sense configuration
-        self.__sense_level = self._sync_command(f"{self._block_id} get senseLevel").value
+        self.__sense_level = self._sync_command(
+            f"{self._block_id} get senseLevel"
+        ).value
         self.__sense_mute = self._sync_command(f"{self._block_id} get senseMute").value
 
         # Threshold and ducking level
         self.__threshold = self._sync_command(f"{self._block_id} get threshold").value
-        self.__ducking_level = self._sync_command(f"{self._block_id} get duckingLevel").value
+        self.__ducking_level = self._sync_command(
+            f"{self._block_id} get duckingLevel"
+        ).value
 
         # Attack and release times
-        self.__attack_time = self._sync_command(f"{self._block_id} get attackTime").value
-        self.__release_time = self._sync_command(f"{self._block_id} get releaseTime").value
+        self.__attack_time = self._sync_command(
+            f"{self._block_id} get attackTime"
+        ).value
+        self.__release_time = self._sync_command(
+            f"{self._block_id} get releaseTime"
+        ).value
 
         # Input stuff
         self.__input_mute = self._sync_command(f"{self._block_id} get inputMute").value
-        self.__input_level = self._sync_command(f"{self._block_id} get inputLevel").value
-        self.__min_input_level = self._sync_command(f"{self._block_id} get minInputLevel").value
-        self.__max_input_level = self._sync_command(f"{self._block_id} get maxInputLevel").value
+        self.__input_level = self._sync_command(
+            f"{self._block_id} get inputLevel"
+        ).value
+        self.__min_input_level = self._sync_command(
+            f"{self._block_id} get minInputLevel"
+        ).value
+        self.__max_input_level = self._sync_command(
+            f"{self._block_id} get maxInputLevel"
+        ).value
 
         # Bypass status
         self.__bypass = self._sync_command(f"{self._block_id} get bypass").value
@@ -119,8 +143,8 @@ class Ducker(Block):
         return self.__bypass
 
     @bypass.setter
-    def bypass(self, value : bool) -> None:
-        self.__bypass, cmd_res = self._set_and_update_val("bypass", value = value)
+    def bypass(self, value: bool) -> None:
+        self.__bypass, cmd_res = self._set_and_update_val("bypass", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -132,8 +156,8 @@ class Ducker(Block):
         return self.__mix_sense
 
     @mix_sense.setter
-    def mix_sense(self, value : bool) -> None:
-        self.__mix_sense, cmd_res = self._set_and_update_val("mixSense", value = value)
+    def mix_sense(self, value: bool) -> None:
+        self.__mix_sense, cmd_res = self._set_and_update_val("mixSense", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -145,8 +169,10 @@ class Ducker(Block):
         return self.__sense_level
 
     @sense_level.setter
-    def sense_level(self, value : float) -> None:
-        self.__sense_level, cmd_res = self._set_and_update_val("senseLevel", value = value)
+    def sense_level(self, value: float) -> None:
+        self.__sense_level, cmd_res = self._set_and_update_val(
+            "senseLevel", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -158,8 +184,8 @@ class Ducker(Block):
         return self.__sense_mute
 
     @sense_mute.setter
-    def sense_mute(self, value : bool) -> None:
-        self.__sense_mute, cmd_res = self._set_and_update_val("senseMute", value = value)
+    def sense_mute(self, value: bool) -> None:
+        self.__sense_mute, cmd_res = self._set_and_update_val("senseMute", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -171,8 +197,8 @@ class Ducker(Block):
         return self.__threshold
 
     @threshold.setter
-    def threshold(self, value : float) -> None:
-        self.__threshold, cmd_res = self._set_and_update_val("threshold", value = value)
+    def threshold(self, value: float) -> None:
+        self.__threshold, cmd_res = self._set_and_update_val("threshold", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -184,8 +210,10 @@ class Ducker(Block):
         return self.__ducking_level
 
     @ducking_level.setter
-    def ducking_level(self, value : float) -> None:
-        self.__ducking_level, cmd_res = self._set_and_update_val("duckingLevel", value = value)
+    def ducking_level(self, value: float) -> None:
+        self.__ducking_level, cmd_res = self._set_and_update_val(
+            "duckingLevel", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -197,8 +225,10 @@ class Ducker(Block):
         return self.__attack_time
 
     @attack_time.setter
-    def attack_time(self, value : float) -> None:
-        self.__attack_time, cmd_res = self._set_and_update_val("attackTime", value = value)
+    def attack_time(self, value: float) -> None:
+        self.__attack_time, cmd_res = self._set_and_update_val(
+            "attackTime", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -210,8 +240,10 @@ class Ducker(Block):
         return self.__release_time
 
     @release_time.setter
-    def release_time(self, value : float) -> None:
-        self.__release_time, cmd_res = self._set_and_update_val("releaseTime", value = value)
+    def release_time(self, value: float) -> None:
+        self.__release_time, cmd_res = self._set_and_update_val(
+            "releaseTime", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -223,8 +255,8 @@ class Ducker(Block):
         return self.__input_mute
 
     @input_mute.setter
-    def input_mute(self, value : bool) -> None:
-        self.__input_mute, cmd_res = self._set_and_update_val("inputMute", value = value)
+    def input_mute(self, value: bool) -> None:
+        self.__input_mute, cmd_res = self._set_and_update_val("inputMute", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -236,8 +268,10 @@ class Ducker(Block):
         return self.__input_level
 
     @input_level.setter
-    def input_level(self, value : float) -> None:
-        self.__input_level, cmd_res = self._set_and_update_val("inputLevel", value = value)
+    def input_level(self, value: float) -> None:
+        self.__input_level, cmd_res = self._set_and_update_val(
+            "inputLevel", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -249,8 +283,10 @@ class Ducker(Block):
         return self.__min_input_level
 
     @min_input_level.setter
-    def min_input_level(self, value : float) -> None:
-        self.__min_input_level, cmd_res = self._set_and_update_val("minInputLevel", value = value)
+    def min_input_level(self, value: float) -> None:
+        self.__min_input_level, cmd_res = self._set_and_update_val(
+            "minInputLevel", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         return cmd_res
@@ -262,10 +298,12 @@ class Ducker(Block):
         return self.__max_input_level
 
     @max_input_level.setter
-    def max_input_level(self, value : float) -> None:
-        self.__max_input_level, cmd_res = self._set_and_update_val("maxInputLevel", value = value)
+    def max_input_level(self, value: float) -> None:
+        self.__max_input_level, cmd_res = self._set_and_update_val(
+            "maxInputLevel", value=value
+        )
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
-        return cmd_res   
+        return cmd_res
 
     # =================================================================================================================

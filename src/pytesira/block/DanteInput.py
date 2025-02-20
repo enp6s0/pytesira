@@ -6,4 +6,5 @@ class DanteInput(BaseDante):
     """
     Dante input DSP block
     """
+
     VERSION = "0.2.0"

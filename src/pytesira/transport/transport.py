@@ -20,11 +20,12 @@ class Transport:
         self.read_buffer_size = 4096
 
         # "Connected" text that confirms transport is ready
-        self.ttp_welcome = "Welcome to the Tesira Text Protocol Server..." 
+        self.ttp_welcome = "Welcome to the Tesira Text Protocol Server..."
 
-    def start(self,
-        exit_event: Event,         # Core exit event (terminates transport channel too)
-        connected_flag: Event,     # Connected flag, lets us tell everyone else the connection status
+    def start(
+        self,
+        exit_event: Event,  # Core exit event (terminates transport channel too)
+        connected_flag: Event,  # Connected flag, lets us tell everyone else the connection status
     ):
         """
         Actually start the backend transport. This will be called by the DSP class and is not
@@ -39,13 +40,13 @@ class Transport:
         """
         raise NotImplementedError
 
-    def recv(self, buffer_size : int) -> str:
+    def recv(self, buffer_size: int) -> str:
         """
         Read data from RX buffer
         """
         raise NotImplementedError
 
-    def send(self, data : str) -> None:
+    def send(self, data: str) -> None:
         """
         Send data to device
         """

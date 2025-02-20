@@ -21,13 +21,16 @@ class BaseUSB(BaseLevelMuteNoSubscription):
 
     # =================================================================================================================
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Block ID
@@ -40,7 +43,14 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         self._chan_label_key = "@"
 
         # Initialize base class
-        super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
+        super().__init__(
+            block_id,
+            exit_flag,
+            connected_flag,
+            command_queue,
+            subscriptions,
+            init_helper,
+        )
 
         # Query status attributes
         # (override base_level_mute_no_subscription)
@@ -57,31 +67,35 @@ class BaseUSB(BaseLevelMuteNoSubscription):
         module on init, and may be called again by the main thread if an interruption
         in connectivity is detected (e.g., SSH disconnect-then-reconnect)
         """
-        self._register_subscription(subscribe_type = "hostMasterMute", channel = None)
-        self._register_subscription(subscribe_type = "hostMasterVol", channel = None)
+        self._register_subscription(subscribe_type="hostMasterMute", channel=None)
+        self._register_subscription(subscribe_type="hostMasterVol", channel=None)
         for i in self.channels.keys():
-            self._register_subscription(subscribe_type = "hostMute", channel = int(i))
-            self._register_subscription(subscribe_type = "hostVol", channel = int(i))
+            self._register_subscription(subscribe_type="hostMute", channel=int(i))
+            self._register_subscription(subscribe_type="hostVol", channel=int(i))
 
             # TODO: we need to handle peak-occuring as callback triggering only
             # but no internal state updates, WHILE letting called functions know
             # exactly which channel is peaking
             # self._register_subscription(subscribe_type = "peak", channel = int(i))
 
-        self._register_subscription(subscribe_type = "connected", channel = None)
-        self._register_subscription(subscribe_type = "streaming", channel = None)
+        self._register_subscription(subscribe_type="connected", channel=None)
+        self._register_subscription(subscribe_type="streaming", channel=None)
 
     def _query_status_attributes(self) -> None:
         """
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
         for i in self.channels.keys():
-            self.channels[i]._muted(self._sync_command(f"{self._block_id} get mute {i}").value)
-            self.channels[i]._level(self._sync_command(f"{self._block_id} get level {i}").value)
+            self.channels[i]._muted(
+                self._sync_command(f"{self._block_id} get mute {i}").value
+            )
+            self.channels[i]._level(
+                self._sync_command(f"{self._block_id} get level {i}").value
+            )
 
     # =================================================================================================================
 
-    def subscription_callback(self, response : TTPResponse) -> None:
+    def subscription_callback(self, response: TTPResponse) -> None:
         """
         Handle incoming subscription callbacks
         """

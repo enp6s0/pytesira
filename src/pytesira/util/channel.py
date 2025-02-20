@@ -8,7 +8,9 @@ class Channel(IndexedObjectWithLevel):
     Channel object for a block ID
     """
 
-    def __init__(self, block_id : str, index : int, callback : Callable, schema : dict = {}) -> None:
+    def __init__(
+        self, block_id: str, index: int, callback: Callable, schema: dict = {}
+    ) -> None:
         """
         Initialize a channel object
         """
@@ -23,7 +25,9 @@ class Channel(IndexedObjectWithLevel):
         # Based on the schema dict provided, we can initialize our extra attributes
         self.__muted = bool(schema["muted"]) if "muted" in schema else None
         self.__inverted = bool(schema["inverted"]) if "inverted" in schema else None
-        self.__fault_on_inactive = bool(schema["fault_on_inactive"]) if "fault_on_inactive" in schema else None
+        self.__fault_on_inactive = (
+            bool(schema["fault_on_inactive"]) if "fault_on_inactive" in schema else None
+        )
 
     # =================================================================================================================
 
@@ -60,12 +64,12 @@ class Channel(IndexedObjectWithLevel):
         return self.__muted
 
     @muted.setter
-    def muted(self, value : bool) -> None:
+    def muted(self, value: bool) -> None:
         assert type(value) == bool, "invalid muted type"
         assert self.__muted is not None, "unsupported attribute muted"
         self._callback("muted", self.index, value)
 
-    def _muted(self, value : bool) -> None:
+    def _muted(self, value: bool) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
@@ -81,12 +85,12 @@ class Channel(IndexedObjectWithLevel):
         return self.__inverted
 
     @inverted.setter
-    def inverted(self, value : bool) -> None:
+    def inverted(self, value: bool) -> None:
         assert type(value) == bool, "invalid inverted type"
         assert self.__inverted is not None, "unsupported attribute inverted"
         self._callback("inverted", self.index, value)
 
-    def _inverted(self, value : bool) -> None:
+    def _inverted(self, value: bool) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
@@ -102,12 +106,14 @@ class Channel(IndexedObjectWithLevel):
         return self.__fault_on_inactive
 
     @fault_on_inactive.setter
-    def fault_on_inactive(self, value : bool) -> None:
+    def fault_on_inactive(self, value: bool) -> None:
         assert type(value) == bool, "invalid fault_on_inactive type"
-        assert self.__fault_on_inactive is not None, "unsupported attribute fault_on_inactive"
+        assert (
+            self.__fault_on_inactive is not None
+        ), "unsupported attribute fault_on_inactive"
         self._callback("fault_on_inactive", self.index, value)
 
-    def _fault_on_inactive(self, value : bool) -> None:
+    def _fault_on_inactive(self, value: bool) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks

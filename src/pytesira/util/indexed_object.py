@@ -11,7 +11,9 @@ class IndexedObject:
     is to be provided by classes that implements this
     """
 
-    def __init__(self, block_id : str, index : int, callback : Callable, schema : dict = {}) -> None:
+    def __init__(
+        self, block_id: str, index: int, callback: Callable, schema: dict = {}
+    ) -> None:
         """
         Initialize the object
         """
@@ -44,9 +46,9 @@ class IndexedObject:
         Export schema to dict (allows re-initialization of object if needed)
         """
         schema = {
-            "index" : self.__index,
-            "label" : self.__label,
-            "parent" : self.__block_id
+            "index": self.__index,
+            "label": self.__label,
+            "parent": self.__block_id,
         }
 
         # Clean out anything that's a None, as that means we don't have
@@ -86,7 +88,7 @@ class IndexedObject:
     def label(self, value) -> None:
         raise AttributeError("label cannot be edited")
 
-    def _label(self, value : str) -> None:
+    def _label(self, value: str) -> None:
         """
         We, however, provide this updater for the framework itself
         to update the value without triggering circular updates

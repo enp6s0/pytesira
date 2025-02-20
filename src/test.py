@@ -25,12 +25,13 @@ with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 device = DSP(block_map="dsp_test.bmap")
-device.connect(backend=SSH(
-                        hostname=config["connection"]["host"],
-                        username=config["connection"]["username"], 
-                        password=config["connection"]["password"],
-                        host_key_check=False
-                ), skip_block_types=[
-                    GraphicEqualizer
-                ])
+device.connect(
+    backend=SSH(
+        hostname=config["connection"]["host"],
+        username=config["connection"]["username"],
+        password=config["connection"]["password"],
+        host_key_check=False,
+    ),
+    skip_block_types=[GraphicEqualizer],
+)
 device.save_block_map(output="dsp_test.bmap")

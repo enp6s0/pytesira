@@ -15,20 +15,30 @@ class LevelControl(BaseLevelMute):
 
     # =================================================================================================================
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
         # Initialize base class
-        super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
+        super().__init__(
+            block_id,
+            exit_flag,
+            connected_flag,
+            command_queue,
+            subscriptions,
+            init_helper,
+        )
 
         # If init helper isn't set, this is the time to query
         try:
@@ -48,7 +58,7 @@ class LevelControl(BaseLevelMute):
 
     # =================================================================================================================
 
-    def __load_init_helper(self, init_helper : dict) -> None:
+    def __load_init_helper(self, init_helper: dict) -> None:
         """
         Use initialization helper to set up attributes instead of querying
         """
@@ -56,7 +66,7 @@ class LevelControl(BaseLevelMute):
 
     # =================================================================================================================
 
-    def subscription_callback(self, response : TTPResponse) -> None:
+    def subscription_callback(self, response: TTPResponse) -> None:
         """
         Handle incoming subscription callbacks
         """

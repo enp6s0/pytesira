@@ -18,20 +18,30 @@ class PassFilter(Block):
 
     # =================================================================================================================
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
         # Initialize base class
-        super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
+        super().__init__(
+            block_id,
+            exit_flag,
+            connected_flag,
+            command_queue,
+            subscriptions,
+            init_helper,
+        )
 
         # If init helper isn't set, this is the time to query
         try:
@@ -48,14 +58,14 @@ class PassFilter(Block):
 
         # Initialization helper base
         self._init_helper = {
-            "max_slope" : self.max_slope,
-            "filter_type" : self.filter_type,
-            "slope" : self.slope
+            "max_slope": self.max_slope,
+            "filter_type": self.filter_type,
+            "slope": self.slope,
         }
 
     # =================================================================================================================
 
-    def __load_init_helper(self, init_helper : dict) -> None:
+    def __load_init_helper(self, init_helper: dict) -> None:
         """
         Use initialization helper to set up attributes instead of querying
         """
@@ -84,7 +94,9 @@ class PassFilter(Block):
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
         self.__bypass = self._sync_command(f"{self._block_id} get bypass").value
-        self.__cutoff_frequency = self._sync_command(f"{self._block_id} get frequency").value
+        self.__cutoff_frequency = self._sync_command(
+            f"{self._block_id} get frequency"
+        ).value
 
     # =================================================================================================================
 
@@ -106,8 +118,8 @@ class PassFilter(Block):
         return self.__bypass
 
     @bypass.setter
-    def bypass(self, value : bool) -> None:
-        new_val, cmd_res = self._set_and_update_val("bypass", value = value)
+    def bypass(self, value: bool) -> None:
+        new_val, cmd_res = self._set_and_update_val("bypass", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         else:
@@ -118,8 +130,8 @@ class PassFilter(Block):
         return self.__cutoff_frequency
 
     @cutoff_frequency.setter
-    def cutoff_frequency(self, value : float) -> None:
-        new_val, cmd_res = self._set_and_update_val("frequency", value = value)
+    def cutoff_frequency(self, value: float) -> None:
+        new_val, cmd_res = self._set_and_update_val("frequency", value=value)
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)
         else:

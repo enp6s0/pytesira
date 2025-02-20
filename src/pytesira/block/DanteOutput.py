@@ -6,4 +6,5 @@ class DanteOutput(BaseDante):
     """
     Dante output DSP block
     """
+
     VERSION = "0.2.0"

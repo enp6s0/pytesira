@@ -28,14 +28,19 @@ class DSP:
         * Graceful handling of SSH connection restarts - should also trigger re-subscription on blocks
     """
 
-    def __init__(self,
-        block_map : str | None = None,          # Block map (attributes cache) file location. This allows PyTesira to bypass block query
-                                                # on startup, resulting in much faster initialization, but will result in incorrect attributes
-                                                # if the system is reprogrammed through the Tesira software. If left blank, or there are
-                                                # detectable differences (e.g., different number of DSP blocks), PyTesira will automatically
-                                                # query the DSP for attribute updates, which may take some time (especially on complex setups)
-        device_refresh_interval : int = 5,      # Device data refresh interval - how often should we poll for things like active alarms?
+    def __init__(
+        self,
+        block_map: str | None = None,  # Block map (attributes cache) file location
+        device_refresh_interval: int = 5,  # Device data refresh interval - how often should we poll for things like active alarms?
     ) -> None:
+
+        # Note about block maps:
+        # Block maps contains cached attributes of DSP blocks, allowing PyTesira to bypass block query
+        # upon startup. This results in much faster initialization, but can also result in incorrect attributes
+        # if the system is reprogrammed through the use of the Tesira programming software
+        #
+        # If block map isn't specified, or there are detectable differences (e.g., different # of DSP blocks),
+        # PyTesira will automatically query the DSP for attribute updates.
 
         # PyTesira version
         try:
@@ -56,27 +61,29 @@ class DSP:
         self.__exit = Event()
 
         # Status flags
-        self.__connected = Event()              # are we connected to the DSP? If not, many operations are not possible, and any data           # noqa: E116
-                                                # we may have cached might be stale. In that case, read/write access to DSP block objects       # noqa: E116
-                                                # should raise an exception. Additionally, if the transport status has changed (say, a          # noqa: E116
-                                                # re-connection has occured), DSP blocks will need to re-subscribe to TSP data streams.         # noqa: E116
+        self.__connected = Event()  # connected to the DSP right now?
 
         # Buffers
-        self.__rx_buffer = ""                   # "raw" buffer for TTP (Tesira Text Protocol) data we received from device
-        self.__rx_cmd_mailbox = None            # "command response" mailbox - here we only handle one command at a time!
+        self.__rx_buffer = ""  # "raw" buffer for TTP (Tesira Text Protocol) data we received from device
+        self.__rx_cmd_mailbox = None  # "command response" mailbox - here we only handle one command at a time!
 
         # Block map file
         self.__block_map = block_map
 
         # Device data refresh interval
-        assert 1 <= int(device_refresh_interval), "invalid data refresh interval, must be >= 1"
+        assert 1 <= int(
+            device_refresh_interval
+        ), "invalid data refresh interval, must be >= 1"
         self.__device_data_refresh_interval = int(device_refresh_interval)
 
     # =================================================================================================================
 
-    def connect(self,
-        backend: Transport,                          # Backend connection transport to the DSP itself (e.g., SSH, Telnet)
-        skip_block_types: list[Block]|None = None,   # Block types to block from loading (can speed up initialization by disabling unused blocks)
+    def connect(
+        self,
+        backend: Transport,  # Backend connection transport to the DSP itself (e.g., SSH, Telnet)
+        skip_block_types: (
+            list[Block] | None
+        ) = None,  # Block types to block from loading (can speed up initialization by disabling unused blocks)
     ) -> None:
         """
         Connect to the DSP
@@ -86,7 +93,7 @@ class DSP:
 
         # Start transport channel
         self.__transport = backend
-        self.__transport.start(exit_event = self.__exit, connected_flag = self.__connected)
+        self.__transport.start(exit_event=self.__exit, connected_flag=self.__connected)
 
         # Wait for channel to start
         self.__logger.info("waiting for TTP channel")
@@ -94,14 +101,16 @@ class DSP:
             time.sleep(0.01)
 
         # Start listen loop
-        self.__rx_thread_handle = Thread(target = self.__rx_loop)
+        self.__rx_thread_handle = Thread(target=self.__rx_loop)
         self.__rx_thread_handle.start()
 
         # Any blocks that we wouldn't want to load?
         self.__skip_block_types = []
         if skip_block_types is not None and type(skip_block_types) == list:
             self.__skip_block_types = skip_block_types
-            self.__logger.info(f"Will skip loading {len(self.__skip_block_types)} DSP block type(s)")
+            self.__logger.info(
+                f"Will skip loading {len(self.__skip_block_types)} DSP block type(s)"
+            )
             self.__logger.debug(f"Skip load: {self.__skip_block_types}")
 
         # Outgoing command queue, this is used so each block can append to it with synchronous
@@ -115,7 +124,7 @@ class DSP:
         # Start thread to process synchronous command requests in local queue
         # after this is started, __sync_command() can and should be used for every
         # TTP command that is to be sent out to the DSP
-        self.__sync_cmd_thread_handle = Thread(target = self.__sync_cmd_process_loop)
+        self.__sync_cmd_thread_handle = Thread(target=self.__sync_cmd_process_loop)
         self.__sync_cmd_thread_handle.start()
 
         # Session baseline setup
@@ -131,10 +140,14 @@ class DSP:
         self.__dsp_aliases = list(self.__sync_command("SESSION get aliases").value)
 
         # Information logging for device parameters
-        self.__logger.info(f"Connected to '{self.hostname}' (S/N {self.serial_number}; software version {self.software_version}; {len(self.__dsp_aliases)} DSP aliases)")
+        self.__logger.info(
+            f"Connected to '{self.hostname}' (S/N {self.serial_number}; software version {self.software_version}; {len(self.__dsp_aliases)} DSP aliases)"
+        )
 
         # Discovered servers (in configuration)
-        self.discovered_servers = self.__sync_command("DEVICE get discoveredServers").value
+        self.discovered_servers = self.__sync_command(
+            "DEVICE get discoveredServers"
+        ).value
 
         # Get DSP block map, either from block map file (if loadable and correct for our DSP) or live query
         self.__block_map = self.__getDSPBlockMap()
@@ -154,21 +167,37 @@ class DSP:
             try:
 
                 # Yes, we get a module handle for that block type
-                block_module = importlib.import_module(f"pytesira.block.{block_type}", "pytesira")
-                block_module_version = str(getattr(block_module, f"{block_type}").VERSION)
+                block_module = importlib.import_module(
+                    f"pytesira.block.{block_type}", "pytesira"
+                )
+                block_module_version = str(
+                    getattr(block_module, f"{block_type}").VERSION
+                )
 
                 # Do we want to load this block?
                 if getattr(block_module, f"{block_type}") in self.__skip_block_types:
-                    self.__logger.info(f"'{block_id}' load skipped ({block_type} excluded by user preference)")
-                    self.__logger.debug(f"skip module load: {block_id} ({block_type}/{block_module}) (user preference)")
+                    self.__logger.info(
+                        f"'{block_id}' load skipped ({block_type} excluded by user preference)"
+                    )
+                    self.__logger.debug(
+                        f"skip module load: {block_id} ({block_type}/{block_module}) (user preference)"
+                    )
                     continue
 
                 # Pre-mapped "attribute map / initialization helper" to pass along to module initialization?
                 block_module_init_helper = None
-                if "attributes" in block and type(block["attributes"]) == dict and len(block["attributes"]) >= 1:
+                if (
+                    "attributes" in block
+                    and type(block["attributes"]) == dict
+                    and len(block["attributes"]) >= 1
+                ):
                     try:
-                        assert block["attributes"]["version"] == block_module_version, "block module version mismatch"
-                        assert type(block["attributes"]["helper"]) == dict, "invalid block module map type"
+                        assert (
+                            block["attributes"]["version"] == block_module_version
+                        ), "block module version mismatch"
+                        assert (
+                            type(block["attributes"]["helper"]) == dict
+                        ), "invalid block module map type"
                         block_module_init_helper = block["attributes"]["helper"]
 
                         # Empty helpers shouldn't be loaded
@@ -176,36 +205,46 @@ class DSP:
                             block_module_init_helper = None
 
                     except Exception as e:
-                        self.__logger.debug(f"block {block_id} ({block_type}) attribute helper cannot be loaded: {e}")
+                        self.__logger.debug(
+                            f"block {block_id} ({block_type}) attribute helper cannot be loaded: {e}"
+                        )
 
                 # Then, we initialize the module
                 self.blocks[block_id] = getattr(block_module, f"{block_type}")(
-                    block_id = block_id,                            # block ID on Tesira
-                    exit_flag = self.__exit,                        # exit flag to stop the block's threads (sync'd with everything else)
-                    connected_flag = self.__connected,              # connected flag (module can refuse to allow access if this is not set)
-                    command_queue = self.__command_queue,           # command queue (to run synchronous commands and get results)
-                    subscriptions = self.__subscriptions,           # subscriptions container (for routing purposes)
-                    init_helper = block_module_init_helper,         # initialization helper, to be used however the module wants
+                    block_id=block_id,  # block ID on Tesira
+                    exit_flag=self.__exit,  # exit flag to stop the block's threads (sync'd with everything else)
+                    connected_flag=self.__connected,  # connected flag (module can refuse to allow access if this is not set)
+                    command_queue=self.__command_queue,  # command queue (to run synchronous commands and get results)
+                    subscriptions=self.__subscriptions,  # subscriptions container (for routing purposes)
+                    init_helper=block_module_init_helper,  # initialization helper, to be used however the module wants
                 )
 
                 # At this point we should have initialization helper dict, so we update the block map with that
-                self.__block_map[block_id]["attributes"] = self.blocks[block_id].export_init_helper()
+                self.__block_map[block_id]["attributes"] = self.blocks[
+                    block_id
+                ].export_init_helper()
 
                 # Set up subscriptions for the module
                 self.blocks[block_id].subscribe()
 
             # No... this module doesn't exist (not supported), so we don't load that
             except ModuleNotFoundError:
-                self.__logger.debug(f"Unsupported DSP block type '{block_type}': {block_id}")
+                self.__logger.debug(
+                    f"Unsupported DSP block type '{block_type}': {block_id}"
+                )
 
         # Start device attribute update loop
-        self.__device_data_refresh_loop_handle = Thread(target = self.__device_data_refresh_loop)
+        self.__device_data_refresh_loop_handle = Thread(
+            target=self.__device_data_refresh_loop
+        )
         self.__device_data_refresh_loop_handle.start()
 
         # Now we're done - DSP object should now be ready to use!
         started_in = time.perf_counter() - startup_time
         self.ready = True
-        self.__logger.info(f"DSP ready (initialization took {round(started_in, 3)} seconds)")
+        self.__logger.info(
+            f"DSP ready (initialization took {round(started_in, 3)} seconds)"
+        )
 
     # =================================================================================================================
 
@@ -230,7 +269,7 @@ class DSP:
 
     # =================================================================================================================
 
-    def save_block_map(self, output : str) -> None:
+    def save_block_map(self, output: str) -> None:
         """
         Save active DSP block map to a file
         """
@@ -244,17 +283,21 @@ class DSP:
         output = os.path.realpath(str(output))
         assert self.__block_map, "No active DSP block map"
         with open(output, "w") as f:
-            json.dump({
-                "hostname" : self.hostname,
-                "aliases" : sorted(self.__dsp_aliases),
-                "blocks" : self.__block_map,
-                "pytesira_version" : self.__version
-            }, f, indent = 4)
+            json.dump(
+                {
+                    "hostname": self.hostname,
+                    "aliases": sorted(self.__dsp_aliases),
+                    "blocks": self.__block_map,
+                    "pytesira_version": self.__version,
+                },
+                f,
+                indent=4,
+            )
         self.__logger.info(f"DSP block map saved: {output}")
 
     # =================================================================================================================
 
-    def device_command(self, command : str) -> TTPResponse:
+    def device_command(self, command: str) -> TTPResponse:
         """
         Send raw command to device
         """
@@ -307,8 +350,12 @@ class DSP:
                     bm = json.load(f)
 
                     assert bm["hostname"] == self.hostname, "hostname mismatch"
-                    assert sorted(bm["aliases"]) == sorted(self.__dsp_aliases), "aliases mismatch"
-                    assert bm["pytesira_version"] == self.__version, "PyTesira version mismatch"
+                    assert sorted(bm["aliases"]) == sorted(
+                        self.__dsp_aliases
+                    ), "aliases mismatch"
+                    assert (
+                        bm["pytesira_version"] == self.__version
+                    ), "PyTesira version mismatch"
 
                     rtn_map = bm["blocks"]
                     block_map_loaded = True
@@ -331,11 +378,15 @@ class DSP:
 
                 # Intentionally make an invalid query such that we get the handler response
                 # which will specify what type of block this is
-                block_type_query_response = self.__sync_command(f'{block_id} get BLOCKTYPE')
-                assert block_type_query_response.type == TTPResponseType.CMD_ERROR, "block type query: invalid response type"
+                block_type_query_response = self.__sync_command(
+                    f"{block_id} get BLOCKTYPE"
+                )
+                assert (
+                    block_type_query_response.type == TTPResponseType.CMD_ERROR
+                ), "block type query: invalid response type"
 
                 if "::Attributes" not in block_type_query_response.value:
-                    # DSP block with no attribute handle... shouldn't happen, 
+                    # DSP block with no attribute handle... shouldn't happen,
                     # but if it does we just skip it
                     continue
 
@@ -343,10 +394,12 @@ class DSP:
                 resp = block_type_query_response.value.split(" ")[-1].strip()
                 block_type = str(resp).replace("Interface::Attributes", "").strip()
                 rtn_map[block_id] = {
-                    "type" : str(block_type),       # block type, very important
-                    "attributes" : None             # no attributes yet (this will trigger attribute query on supported blocks)
+                    "type": str(block_type),  # block type, very important
+                    "attributes": None,  # no attributes yet (this will trigger attribute query on supported blocks)
                 }
-                self.__logger.debug(f"(DSP block discovery: {i + 1}/{len(self.__dsp_aliases)}) {block_id} -> {block_type}")
+                self.__logger.debug(
+                    f"(DSP block discovery: {i + 1}/{len(self.__dsp_aliases)}) {block_id} -> {block_type}"
+                )
 
             self.__logger.info(f"found {len(rtn_map)} DSP blocks")
 
@@ -365,7 +418,7 @@ class DSP:
 
             # Grab command item from the queue (and expand the tuple)
             try:
-                handle, command = self.__command_queue.get(timeout = 0.5)
+                handle, command = self.__command_queue.get(timeout=0.5)
             except queue.Empty:
                 # We didn't get anything, let's just move on to another iteration
                 # (by doing so, this evaluates the exit flag at least once every
@@ -381,12 +434,16 @@ class DSP:
                 # to callback for this, just write data to local synchronous
                 # command mailbox and we'll be done:
                 self.__sync_cmd_mailbox = response
-                self.__logger.debug("sync command response delivery: main loop sync_cmd_mailbox")
+                self.__logger.debug(
+                    "sync command response delivery: main loop sync_cmd_mailbox"
+                )
             else:
                 # This is called from elsewhere, so we need to invoke
                 # the corresponding block's callback:
-                handle._sync_command_callback(data = response)
-                self.__logger.debug(f"sync command response delivery: callback to {handle}")
+                handle._sync_command_callback(data=response)
+                self.__logger.debug(
+                    f"sync command response delivery: callback to {handle}"
+                )
 
             # Notify queue of a completed task
             self.__command_queue.task_done()
@@ -430,7 +487,7 @@ class DSP:
 
     # =================================================================================================================
 
-    def __sync_command(self, command : str, timeout : float = 3.0) -> TTPResponse:
+    def __sync_command(self, command: str, timeout: float = 3.0) -> TTPResponse:
         """
         Command send-and-wait function that uses the main command queue instead of talking
         to the transport channel directly. This should be used after __sync_cmd_process_loop() has
@@ -490,7 +547,9 @@ class DSP:
                     # Where did this come from?
                     subscriber = self.__subscriptions[decoded.publish_token]
                     if not subscriber:
-                        self.__logger.error(f"subscription callback for invalid subscriber: {decoded.publish_token}")
+                        self.__logger.error(
+                            f"subscription callback for invalid subscriber: {decoded.publish_token}"
+                        )
                     else:
                         # OK, we have a subscriber, let's call their callback so the block code
                         # can figure out what to do with that data
@@ -499,7 +558,7 @@ class DSP:
 
                 else:
                     self.__logger.debug(f"rx (res): {decoded}")
-                    self.__rx_cmd_mailbox = decoded                    
+                    self.__rx_cmd_mailbox = decoded
 
         # If we're here, we're exiting
         self.__logger.debug("rx loop terminated")
@@ -507,7 +566,9 @@ class DSP:
 
     # =================================================================================================================
 
-    def __transport_send_and_wait(self, command : str, timeout : float = 3) -> TTPResponse:
+    def __transport_send_and_wait(
+        self, command: str, timeout: float = 3
+    ) -> TTPResponse:
         """
         Send TSP command to device and wait for response (with a timeout limit)
         Note: only ONE command should be sent at a time, rapid-fire sends may
@@ -549,9 +610,11 @@ class DSP:
 
         # Fill buffer from stream
         while self.__transport.recv_ready:
-            self.__rx_buffer += str(self.__transport.recv(self.__transport.read_buffer_size))
+            self.__rx_buffer += str(
+                self.__transport.recv(self.__transport.read_buffer_size)
+            )
 
-        # If there us a newline, response has ended. We go through lines until we get something 
+        # If there us a newline, response has ended. We go through lines until we get something
         # with either "+OK", "-ERR", or "!" prefixes, those are valid lines. We don't return
         # invalid lines otherwise.
         #
@@ -560,9 +623,13 @@ class DSP:
         while "\n" in self.__rx_buffer:
             newline_position = self.__rx_buffer.find("\n")
             line = str(self.__rx_buffer[:newline_position]).strip()
-            self.__rx_buffer = self.__rx_buffer[newline_position + 1:]
+            self.__rx_buffer = self.__rx_buffer[newline_position + 1 :]  # noqa: E203
 
-            if line != "" and (line.startswith("+OK") or line.startswith("-ERR") or line.startswith("!")):
+            if line != "" and (
+                line.startswith("+OK")
+                or line.startswith("-ERR")
+                or line.startswith("!")
+            ):
                 # Valid line
                 return line
 

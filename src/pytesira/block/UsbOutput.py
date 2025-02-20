@@ -6,4 +6,5 @@ class UsbOutput(BaseUSB):
     """
     USB output block
     """
+
     VERSION = "0.1.0"

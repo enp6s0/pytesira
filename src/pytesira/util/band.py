@@ -11,7 +11,9 @@ class Band(IndexedObjectWithLevel):
     extend IndexedObjectWithLevel and not have to maintain repetitive code here)
     """
 
-    def __init__(self, block_id : str, index : int, callback : Callable, schema : dict = {}) -> None:
+    def __init__(
+        self, block_id: str, index: int, callback: Callable, schema: dict = {}
+    ) -> None:
         # Call superclass init. This also handles setting up self._callback for us,
         # which we can directly call from here if needed.
         #
@@ -55,12 +57,12 @@ class Band(IndexedObjectWithLevel):
         return self.__bypass
 
     @bypass.setter
-    def bypass(self, value : bool) -> None:
+    def bypass(self, value: bool) -> None:
         assert type(value) == bool, "invalid bypass type"
         assert self.__bypass is not None, "unsupported attribute bypass"
         self._callback("bypass", self.index, value)
 
-    def _bypass(self, value : bool) -> None:
+    def _bypass(self, value: bool) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks

@@ -8,14 +8,15 @@ class TTPResponseType(Enum):
     """
     TTP response types
     """
-    UNKNOWN = 0             # Unknown / default, should never really occur
-    CMD_OK = 1              # OK response with no value (e.g., command acknowledgements)
-    CMD_OK_VALUE = 2        # OK response with attached value
-    CMD_ERROR = 3           # Error response
-    SUBSCRIPTION = 5        # Subscription response
+
+    UNKNOWN = 0  # Unknown / default, should never really occur
+    CMD_OK = 1  # OK response with no value (e.g., command acknowledgements)
+    CMD_OK_VALUE = 2  # OK response with attached value
+    CMD_ERROR = 3  # Error response
+    SUBSCRIPTION = 5  # Subscription response
 
 
-class TTPResponse():
+class TTPResponse:
     """
     Tesira Text Protocol (TTP) response object
 
@@ -24,7 +25,7 @@ class TTPResponse():
     NOTE: this assumes that the TTP channel is set to verbose mode!
     """
 
-    def __init__(self, ttp_string : str) -> None:
+    def __init__(self, ttp_string: str) -> None:
         """
         One stop function that does everything this class is supposed to do
 
@@ -62,7 +63,7 @@ class TTPResponse():
                 # We expect the response to have the format of HEADER_TYPE : VALUE
                 # (sometimes the header type is indicative of what the data would look like,
                 #  but sometimes it doesn't, so we handle those here)
-                header_type = resp.split(":", 1)[0].replace('"', '').strip().lower()
+                header_type = resp.split(":", 1)[0].replace('"', "").strip().lower()
                 data = resp.split(":", 1)[1].strip()
 
                 if header_type == "value":
@@ -76,7 +77,11 @@ class TTPResponse():
 
                 elif header_type == "list":
                     # Extract list items and save (after value conversion of each item) to an attribute
-                    items = list(re.findall('"([^"]*)"', data.split("[", 1)[1].split("]", 1)[0].strip()))
+                    items = list(
+                        re.findall(
+                            '"([^"]*)"', data.split("[", 1)[1].split("]", 1)[0].strip()
+                        )
+                    )
                     self.value = [self.__value_format(i) for i in items]
 
         # Error response
@@ -90,12 +95,18 @@ class TTPResponse():
             self.type = TTPResponseType.SUBSCRIPTION
 
             # Subscription returns are given as a key-value pair, AS PLAIN TEXT, so we need to decode that
-            kv_return = self.__deep_parse_value(str(ttp_string[1:]), force_first_layer_as_dict = True)
+            kv_return = self.__deep_parse_value(
+                str(ttp_string[1:]), force_first_layer_as_dict=True
+            )
 
             # Now, in kv_return, we have a key-value container. This should have publishToken, which will
             # correspond to the subscription string used to make the subscription, as well as value
-            assert "value" in kv_return, f"subscription callback with no data value: {ttp_string}"
-            assert "publishToken" in kv_return, f"subscription callback with no publish token: {ttp_string}"
+            assert (
+                "value" in kv_return
+            ), f"subscription callback with no data value: {ttp_string}"
+            assert (
+                "publishToken" in kv_return
+            ), f"subscription callback with no publish token: {ttp_string}"
 
             # Value and publish token data is returned verbatim
             self.value = kv_return["value"]
@@ -104,7 +115,9 @@ class TTPResponse():
             # We however want to process the publish token a little more too, as it contains valuable
             # data on what it is (format in block.py, should be f"S_{subscribe_type}_{channel_id}_{self._block_id}")
             pub_token_splitted = self.publish_token.split("_", 3)
-            assert str(pub_token_splitted[0]).strip() == "S", f"non-prefixed subscription callback: {ttp_string}"
+            assert (
+                str(pub_token_splitted[0]).strip() == "S"
+            ), f"non-prefixed subscription callback: {ttp_string}"
 
             self.subscription_type = str(pub_token_splitted[1]).strip()
             self.subscription_channel_id = str(pub_token_splitted[2]).strip()
@@ -126,7 +139,9 @@ class TTPResponse():
         else:
             return f"Response [{self.type}]"
 
-    def __deep_parse_value(self, raw : str, force_first_layer_as_dict : bool = False) -> dict:
+    def __deep_parse_value(
+        self, raw: str, force_first_layer_as_dict: bool = False
+    ) -> dict:
         """
         Given a long string (some sort of proto-JSON which doesn't include commas), we want to parse it and return nice
         objects...
@@ -140,7 +155,11 @@ class TTPResponse():
             raw = str(raw[1:-1]) if not force_first_layer_as_dict else raw
 
             # Find key-value items in here
-            key_values = list(re.findall(r'("[^"]*"|[^: ]+):\s*("[^"]*"|\[.*?\]|\{.*?\}|[^"\[\{ ]*)', raw))
+            key_values = list(
+                re.findall(
+                    r'("[^"]*"|[^: ]+):\s*("[^"]*"|\[.*?\]|\{.*?\}|[^"\[\{ ]*)', raw
+                )
+            )
 
             # Clean up keys and values (strip outermost quotes if one exists)
             cleaned = {}
@@ -153,7 +172,7 @@ class TTPResponse():
                     key = str(key[1:-1])
 
                 if val.startswith('"') and val.endswith('"'):
-                    val = str(val[1:-1]) 
+                    val = str(val[1:-1])
 
                 # Recursively resolve value items
                 # HACK: if key is already in what we're going to return, we ignore
@@ -174,11 +193,15 @@ class TTPResponse():
             stack = []
 
             for char in raw + " ":
-                if char in "[\"{":
+                if char in '["{':
                     stack.append(char)
                     current_token += char
-                elif char in "]}\"":
-                    if stack and ((char == "]" and stack[-1] == "[") or (char == "}" and stack[-1] == "{") or (char == "\"" and stack[-1] == "\"")):
+                elif char in ']}"':
+                    if stack and (
+                        (char == "]" and stack[-1] == "[")
+                        or (char == "}" and stack[-1] == "{")
+                        or (char == '"' and stack[-1] == '"')
+                    ):
                         stack.pop()
                         current_token += char
                     else:
@@ -200,10 +223,10 @@ class TTPResponse():
         else:
             # Value (base case)
             if raw.startswith('"') and raw.endswith('"'):
-                raw = str(val[1:-1]) 
+                raw = str(val[1:-1])
             return self.__value_format(raw)
 
-    def __value_format(self, val : float|int|bool|str) -> float|int|bool|str:
+    def __value_format(self, val: float | int | bool | str) -> float | int | bool | str:
         """
         Given a data as a value, try to guess whether it's a string, boolean,
         integer, or float... then cast accordingly

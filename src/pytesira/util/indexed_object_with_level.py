@@ -8,7 +8,9 @@ class IndexedObjectWithLevel(IndexedObject):
     Indexed object, with current, minimum, and maximum level extensions
     """
 
-    def __init__(self, block_id : str, index : int, callback : Callable, schema : dict = {}) -> None:
+    def __init__(
+        self, block_id: str, index: int, callback: Callable, schema: dict = {}
+    ) -> None:
         """
         Initialize a channel object
         """
@@ -61,12 +63,12 @@ class IndexedObjectWithLevel(IndexedObject):
         return self.__level
 
     @level.setter
-    def level(self, value : float) -> None:
+    def level(self, value: float) -> None:
         assert type(value) == float, "invalid level type"
         assert self.__level is not None, "unsupported attribute level"
         self._callback("level", self.index, value)
 
-    def _level(self, value : float) -> None:
+    def _level(self, value: float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
@@ -82,12 +84,12 @@ class IndexedObjectWithLevel(IndexedObject):
         return self.__min_level
 
     @min_level.setter
-    def min_level(self, value : float) -> None:
+    def min_level(self, value: float) -> None:
         assert type(value) == float, "invalid min_level type"
         assert self.__level is not None, "unsupported attribute min_level"
         self._callback("min_level", self.index, value)
 
-    def _min_level(self, value : float) -> None:
+    def _min_level(self, value: float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks
@@ -103,12 +105,12 @@ class IndexedObjectWithLevel(IndexedObject):
         return self.__max_level
 
     @max_level.setter
-    def max_level(self, value : float) -> None:
+    def max_level(self, value: float) -> None:
         assert type(value) == float, "invalid level type"
         assert self.__level is not None, "unsupported attribute max_level"
         self._callback("max_level", self.index, value)
 
-    def _max_level(self, value : float) -> None:
+    def _max_level(self, value: float) -> None:
         """
         Hidden updater so that the parent class can update our value
         without triggering circular callbacks

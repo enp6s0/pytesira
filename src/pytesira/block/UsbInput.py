@@ -6,4 +6,5 @@ class UsbInput(BaseUSB):
     """
     USB input block
     """
+
     VERSION = "0.1.0"

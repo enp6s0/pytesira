@@ -12,13 +12,14 @@ class SSH(Transport):
     PyTesira SSH transport using Paramiko
     """
 
-    def __init__(self,
-        hostname: str,                      # Device hostname/IP
-        username: str,                      # SSH username
-        password: str,                      # SSH password
-        port: int = 22,                     # SSH port
-        host_key_check: bool = True,        # Enable SSH host key checking?
-        connection_timeout: int = 5,        # SSH connection timeout (seconds)
+    def __init__(
+        self,
+        hostname: str,  # Device hostname/IP
+        username: str,  # SSH username
+        password: str,  # SSH password
+        port: int = 22,  # SSH port
+        host_key_check: bool = True,  # Enable SSH host key checking?
+        connection_timeout: int = 5,  # SSH connection timeout (seconds)
     ) -> None:
 
         # Base class initialization
@@ -35,7 +36,9 @@ class SSH(Transport):
         self.__host_key_check = bool(host_key_check)
         self.__connection_timeout = int(connection_timeout)
         assert 1 <= self.__port <= 65535, f"Invalid SSH port {self.__port}"
-        assert 1 <= self.__connection_timeout, f"Invalid connection timeout {self.__connection_timeout}"
+        assert (
+            1 <= self.__connection_timeout
+        ), f"Invalid connection timeout {self.__connection_timeout}"
 
         # Actual connection object (Paramiko channel)
         self.__channel = None
@@ -46,9 +49,10 @@ class SSH(Transport):
 
     # =================================================================================================================
 
-    def start(self,
-        exit_event: Event,                  # Core exit event (terminates transport channel too)
-        connected_flag: Event,              # Connected flag, lets us tell everyone else the connection status
+    def start(
+        self,
+        exit_event: Event,  # Core exit event (terminates transport channel too)
+        connected_flag: Event,  # Connected flag, lets us tell everyone else the connection status
     ) -> None:
         """
         Actually start the backend transport
@@ -59,7 +63,7 @@ class SSH(Transport):
         self.__connected = connected_flag
 
         # Start transport thread
-        self.__thread = Thread(target = self.__mainThread)
+        self.__thread = Thread(target=self.__mainThread)
         self.__thread.start()
 
     # =================================================================================================================
@@ -89,7 +93,7 @@ class SSH(Transport):
     # =================================================================================================================
 
     @assert_device_ready
-    def recv(self, buffer_size : int) -> str:
+    def recv(self, buffer_size: int) -> str:
         """
         Read data from RX buffer
         """
@@ -98,7 +102,7 @@ class SSH(Transport):
     # =================================================================================================================
 
     @assert_device_ready
-    def send(self, data : str) -> None:
+    def send(self, data: str) -> None:
         """
         Send data to device
         """
@@ -115,7 +119,9 @@ class SSH(Transport):
             try:
 
                 # If channel isn't connected, we connect
-                if (not self.__channel) or (self.__channel is not None and self.__channel.closed):
+                if (not self.__channel) or (
+                    self.__channel is not None and self.__channel.closed
+                ):
                     self.__connect()
 
                 # Now the thread doesn't have to do anything, since Paramiko will take over
@@ -155,14 +161,18 @@ class SSH(Transport):
         self.__connected.clear()
 
         # Session and channel (Paramiko shell session)
-        self.__session = paramiko.SSHClient()    
-        self.__session.set_missing_host_key_policy(paramiko.RejectPolicy() if self.__host_key_check else paramiko.WarningPolicy())
+        self.__session = paramiko.SSHClient()
+        self.__session.set_missing_host_key_policy(
+            paramiko.RejectPolicy()
+            if self.__host_key_check
+            else paramiko.WarningPolicy()
+        )
         self.__session.connect(
-            self.__hostname, 
-            self.__port, 
-            username = self.__username, 
-            password = self.__password, 
-            timeout = self.__connection_timeout
+            self.__hostname,
+            self.__port,
+            username=self.__username,
+            password=self.__password,
+            timeout=self.__connection_timeout,
         )
         self.__channel = self.__session.invoke_shell()
         self.__logger.debug("channel started")
@@ -191,5 +201,7 @@ class SSH(Transport):
             self.__connected.clear()
         else:
             # Connection OK :)
-            self.__logger.info(f"Tesira text protocol session established ({round(time.perf_counter() - conn_init_time, 3)} sec)")
+            self.__logger.info(
+                f"Tesira text protocol session established ({round(time.perf_counter() - conn_init_time, 3)} sec)"
+            )
             self.__connected.set()

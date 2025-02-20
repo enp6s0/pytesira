@@ -19,13 +19,16 @@ class GraphicEqualizer(Block):
 
     # =================================================================================================================
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Block ID for later use
@@ -35,7 +38,14 @@ class GraphicEqualizer(Block):
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
         # Initialize base class
-        super().__init__(block_id, exit_flag, connected_flag, command_queue, subscriptions, init_helper)
+        super().__init__(
+            block_id,
+            exit_flag,
+            connected_flag,
+            command_queue,
+            subscriptions,
+            init_helper,
+        )
 
         # If init helper isn't set, this is the time to query
         try:
@@ -51,21 +61,21 @@ class GraphicEqualizer(Block):
         self.__query_status_attributes()
 
         # Initialization helper
-        self._init_helper = {
-            "bands" : {}
-        }
+        self._init_helper = {"bands": {}}
         for idx, b in self.bands.items():
             self._init_helper["bands"][int(idx)] = b.schema
 
     # =================================================================================================================
 
-    def __load_init_helper(self, init_helper : dict) -> None:
+    def __load_init_helper(self, init_helper: dict) -> None:
         """
         Use initialization helper to set up attributes instead of querying
         """
         self.bands = {}
         for i, d in init_helper["bands"].items():
-            self.bands[int(i)] = Band(self._block_id, int(i), self.__attribute_change_callback, d)
+            self.bands[int(i)] = Band(
+                self._block_id, int(i), self.__attribute_change_callback, d
+            )
 
     # =================================================================================================================
 
@@ -82,7 +92,9 @@ class GraphicEqualizer(Block):
 
         # Create a "blank slate" band for each EQ band
         for i in range(1, num_bands + 1):
-            self.bands[int(i)] = Band(self._block_id, int(i), self.__attribute_change_callback, {})
+            self.bands[int(i)] = Band(
+                self._block_id, int(i), self.__attribute_change_callback, {}
+            )
 
     def __query_status_attributes(self) -> None:
         """
@@ -93,17 +105,27 @@ class GraphicEqualizer(Block):
 
         # Get attributes for each band
         for i in self.bands.keys():
-            self.bands[int(i)]._level(self._sync_command(f"{self._block_id} get gain {i}").value)
-            self.bands[int(i)]._min_level(self._sync_command(f"{self._block_id} get minGain {i}").value)
-            self.bands[int(i)]._max_level(self._sync_command(f"{self._block_id} get maxGain {i}").value)
-            self.bands[int(i)]._bypass(self._sync_command(f"{self._block_id} get bypass {i}").value)
+            self.bands[int(i)]._level(
+                self._sync_command(f"{self._block_id} get gain {i}").value
+            )
+            self.bands[int(i)]._min_level(
+                self._sync_command(f"{self._block_id} get minGain {i}").value
+            )
+            self.bands[int(i)]._max_level(
+                self._sync_command(f"{self._block_id} get maxGain {i}").value
+            )
+            self.bands[int(i)]._bypass(
+                self._sync_command(f"{self._block_id} get bypass {i}").value
+            )
 
         # Bypass-all status
         self.__bypass = self._sync_command(f"{self._block_id} get bypassAll").value
 
     # =================================================================================================================
 
-    def __attribute_change_callback(self, data_type : str, source_index : int, new_value : bool|str|float|int) -> TTPResponse:
+    def __attribute_change_callback(
+        self, data_type: str, source_index: int, new_value: bool | str | float | int
+    ) -> TTPResponse:
         """
         Send out commands when we get an attribute change on one of our sources
         """
@@ -112,11 +134,7 @@ class GraphicEqualizer(Block):
         if data_type in ["level", "min_level", "max_level"]:
 
             # Translation on what to set
-            _tdict = {
-                "level" : "gain",
-                "min_level" : "minGain",
-                "max_level" : "maxGain"
-            }
+            _tdict = {"level": "gain", "min_level": "minGain", "max_level": "maxGain"}
             to_set = _tdict[str(data_type).lower().strip()]
 
             # Update value and local cache of the same value (using the "magic" updater method)
@@ -130,7 +148,9 @@ class GraphicEqualizer(Block):
         # Bypass change
         elif data_type == "bypass":
 
-            new_val, cmd_res = self._set_and_update_val("bypass", str(new_value).lower(), source_index)
+            new_val, cmd_res = self._set_and_update_val(
+                "bypass", str(new_value).lower(), source_index
+            )
             self.bands[int(source_index)]._bypass(new_val)
 
             if cmd_res.type != TTPResponseType.CMD_OK:
@@ -161,14 +181,16 @@ class GraphicEqualizer(Block):
         return self.__bypass
 
     @bypass.setter
-    def bypass(self, value : bool) -> None:
+    def bypass(self, value: bool) -> None:
         """
         Set 'bypass all channels' value
         """
         assert type(value) == bool, "invalid value type for bypass"
 
         # To update the block status, we don't have a subscription, so we do a query (just to confirm)
-        self.__bypass, cmd_result = self._set_and_update_val("bypassAll", str(value).lower())
+        self.__bypass, cmd_result = self._set_and_update_val(
+            "bypassAll", str(value).lower()
+        )
 
         # Raise an error if the original command didn't return OK for whatever reason
         if cmd_result.type != TTPResponseType.CMD_OK:

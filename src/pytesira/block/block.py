@@ -14,13 +14,16 @@ class Block:
     # trigger a re-discovery of attributes, to handle any changes
     VERSION = "base-0.1.0"
 
-    def __init__(self,
-        block_id: str,                  # block ID on Tesira
-        exit_flag: Event,               # exit flag to stop the block's threads (sync'd with everything else)                    
-        connected_flag: Event,          # connected flag (module can refuse to allow access if this is not set)
-        command_queue: Queue,           # command queue (to run synchronous commands and get results)
-        subscriptions: dict,            # subscription container on main thread
-        init_helper: str|None = None,   # initialization helper (if not specified, query everything from scratch)
+    def __init__(
+        self,
+        block_id: str,  # block ID on Tesira
+        exit_flag: Event,  # exit flag to stop the block's threads (sync'd with everything else)
+        connected_flag: Event,  # connected flag (module can refuse to allow access if this is not set)
+        command_queue: Queue,  # command queue (to run synchronous commands and get results)
+        subscriptions: dict,  # subscription container on main thread
+        init_helper: (
+            str | None
+        ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
         # Logger should be set up first by subclass, but if not
@@ -50,7 +53,7 @@ class Block:
         """
         return
 
-    def subscription_callback(self, response : TTPResponse) -> None:
+    def subscription_callback(self, response: TTPResponse) -> None:
         """
         Subscription results matching this block ID will be returned here so that
         they can be processed
@@ -74,30 +77,31 @@ class Block:
         after the attribute query process, which allows for the block map
         to be updated
         """
-        return {
-            "version" : self.VERSION,
-            "helper" : self._init_helper
-        }
+        return {"version": self.VERSION, "helper": self._init_helper}
 
     # =================================================================================================================
     # Generally, there's no need to change or override methods below here, they apply to every block in the same way
     # =================================================================================================================
 
-    def register_callback(self, callback : Callable, key : str|None = None) -> None:
+    def register_callback(self, callback: Callable, key: str | None = None) -> None:
         """
-        Register a callback, optionally specifying a callback key so it can be 
+        Register a callback, optionally specifying a callback key so it can be
         easily unregistered if so needed
         """
         self._callbacks[key if key else callback] = callback
-        self._logger.debug(f"callback registered ({len(self._callbacks)} active callbacks)")
+        self._logger.debug(
+            f"callback registered ({len(self._callbacks)} active callbacks)"
+        )
 
-    def unregister_callback(self, key : str) -> None:
+    def unregister_callback(self, key: str) -> None:
         """
         Unregister callback based on key specified earlier on callback creation
         """
         try:
             del self._callbacks[key]
-            self._logger.debug(f"callback removed ({len(self._callbacks)} active callbacks)")
+            self._logger.debug(
+                f"callback removed ({len(self._callbacks)} active callbacks)"
+            )
         except Exception as e:
             self._logger.warning(f"cannot remove callback {key}: {e}")
 
@@ -106,7 +110,9 @@ class Block:
     # again, they should apply to every block in the same way, so no need to edit or override them
     # =================================================================================================================
 
-    def _set_and_update_val(self, what : str, value : str|bool|float|int, channel : int|None = None) -> tuple[str|bool|float|int, TTPResponse]:
+    def _set_and_update_val(
+        self, what: str, value: str | bool | float | int, channel: int | None = None
+    ) -> tuple[str | bool | float | int, TTPResponse]:
         """
         Helper that sets a specific value and then updates internal state with a re-query.
         Returns a tuple of the updated value as well as TTPResponse
@@ -116,8 +122,12 @@ class Block:
             cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
             read_value = self._sync_command(f'"{self._block_id}" get {what}').value
         else:
-            cmd_result = self._sync_command(f'"{self._block_id}" set {what} {channel} {value}')
-            read_value = self._sync_command(f'"{self._block_id}" get {what} {channel}').value
+            cmd_result = self._sync_command(
+                f'"{self._block_id}" set {what} {channel} {value}'
+            )
+            read_value = self._sync_command(
+                f'"{self._block_id}" get {what} {channel}'
+            ).value
 
         return read_value, cmd_result
 
@@ -131,9 +141,13 @@ class Block:
                 callback(self)
                 self._logger.debug(f"callback invoked: {callback}")
             else:
-                self._logger.debug(f"uncallable callback: {callback} ({type(callback)})")
+                self._logger.debug(
+                    f"uncallable callback: {callback} ({type(callback)})"
+                )
 
-    def _register_subscription(self, subscribe_type : str, channel : int|None = None) -> None:
+    def _register_subscription(
+        self, subscribe_type: str, channel: int | None = None
+    ) -> None:
         """
         Register subscription with the DSP. This function generates the subscription command
         with the correct prefix IDs and metadata, such that responses will be directed back here
@@ -150,7 +164,9 @@ class Block:
         sub_name = f"S_{subscribe_type}_{channel_id}_{self._block_id}"
 
         # Create subscription string
-        sub_string = f'"{self._block_id}" subscribe {subscribe_type}{sub_channel} "{sub_name}"'
+        sub_string = (
+            f'"{self._block_id}" subscribe {subscribe_type}{sub_channel} "{sub_name}"'
+        )
 
         # Add that subscription to the main subscription list
         subscription_meta = (self, self._block_id, sub_name, sub_string)
@@ -158,9 +174,11 @@ class Block:
 
         # Send command to device to actually start subscription
         self._sync_command(sub_string)
-        self._logger.debug(f"subscription setup: {self._block_id} {subscribe_type} (total {len(self._subscriptions)} subscriptions active)")
+        self._logger.debug(
+            f"subscription setup: {self._block_id} {subscribe_type} (total {len(self._subscriptions)} subscriptions active)"
+        )
 
-    def _sync_command_callback(self, data : TTPResponse) -> None:
+    def _sync_command_callback(self, data: TTPResponse) -> None:
         """
         Should we queue a synchronous command and that gets executed by the main thread,
         this method gets called for a response to that command
@@ -168,7 +186,7 @@ class Block:
         self._sync_cmd_mailbox = data
         return
 
-    def _sync_command(self, command : str, timeout : float = 3.0) -> TTPResponse:
+    def _sync_command(self, command: str, timeout: float = 3.0) -> TTPResponse:
         """
         Execute synchronous command (technically this abstracts it behind a queue,
         but we don't have to see that elsewhere in the block module code, which makes it nicer!)
