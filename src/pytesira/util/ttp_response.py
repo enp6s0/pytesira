@@ -133,7 +133,10 @@ class TTPResponse:
         """
         if self.value:
             if self.publish_token and self.type == TTPResponseType.SUBSCRIPTION:
-                return f"Subscription response [{type(self.value)}] {self.value} (type={self.subscription_type}, channel={self.subscription_channel_id}, block={self.subscription_block_id})"
+                more_info = f"(type={self.subscription_type},\
+                            channel={self.subscription_channel_id},\
+                            block={self.subscription_block_id})"
+                return f"Subscription response [{type(self.value)}] {self.value} {more_info}"
             else:
                 return f"Response [{self.type}][{type(self.value)}] {self.value}"
         else:

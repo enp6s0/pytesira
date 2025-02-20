@@ -31,7 +31,7 @@ class DSP:
     def __init__(
         self,
         block_map: str | None = None,  # Block map (attributes cache) file location
-        device_refresh_interval: int = 5,  # Device data refresh interval - how often should we poll for things like active alarms?
+        device_refresh_interval: int = 5,  # Device data refresh (polling/re-subscription interval)
     ) -> None:
 
         # Note about block maps:
@@ -140,8 +140,9 @@ class DSP:
         self.__dsp_aliases = list(self.__sync_command("SESSION get aliases").value)
 
         # Information logging for device parameters
+        self.__logger.info(f"connected to '{self.hostname}' (S/N {self.serial_number})")
         self.__logger.info(
-            f"Connected to '{self.hostname}' (S/N {self.serial_number}; software version {self.software_version}; {len(self.__dsp_aliases)} DSP aliases)"
+            f"device software {self.software_version} ({len(self.__dsp_aliases)} DSP aliases)"
         )
 
         # Discovered servers (in configuration)
