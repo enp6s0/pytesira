@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 from threading import Event
-from pytesira.block.block import Block
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponse
 from pytesira.block.base_level_mute_no_subscription import BaseLevelMuteNoSubscription
-import time
 import logging
 
 class BaseUSB(BaseLevelMuteNoSubscription):

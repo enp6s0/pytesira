@@ -2,8 +2,7 @@
 from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
-import time
+from pytesira.util.ttp_response import TTPResponseType
 import logging
 
 class Ducker(Block):

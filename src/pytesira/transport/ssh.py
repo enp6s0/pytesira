@@ -69,7 +69,7 @@ class SSH(Transport):
         """
 
         def wrapper(self, *args, **kwargs):
-            assert self.__channel != None, "Channel not initialized"
+            assert self.__channel != None, "Channel not initialized"  # noqa: E711
             assert self.__channel.active, "Device not ready"
             return f(self, *args, **kwargs)
 
@@ -147,7 +147,7 @@ class SSH(Transport):
         try:
             self.__channel.close()
             self.__logger.debug(f"old SSH channel closed")
-        except Exception as e:
+        except Exception:
             pass
 
         # Start from disconnected state

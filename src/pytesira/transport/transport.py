@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-import logging
-from threading import Thread, Event
+from threading import Event
 
 class Transport:
     """

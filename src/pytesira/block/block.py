@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from threading import Event
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponse
 from collections.abc import Callable
 import time
 import logging

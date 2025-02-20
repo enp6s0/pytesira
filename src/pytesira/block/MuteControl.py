@@ -4,7 +4,6 @@ from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.channel import Channel
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
-import time
 import logging
 
 class MuteControl(Block):

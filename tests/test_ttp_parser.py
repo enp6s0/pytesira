@@ -144,7 +144,7 @@ def test_parse_active_fault_list_nofault():
 
     assert type(r.value) == list
     assert len(r.value) == 1
-    
+
     rv = r.value[0]
     assert rv["id"] == "INDICATOR_NONE_IN_DEVICE"
     assert rv["name"] == "No fault in device"
@@ -162,7 +162,7 @@ def test_parse_active_fault_list_hasfault():
 
     assert type(r.value) == list
     assert len(r.value) == 1
-    
+
     rv = r.value[0]
     assert rv["id"] == "INDICATOR_MAJOR_IN_DEVICE"
     assert rv["name"] == "Major Fault in Device"

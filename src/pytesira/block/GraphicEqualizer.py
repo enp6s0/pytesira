@@ -4,7 +4,6 @@ from pytesira.block.block import Block
 from queue import Queue
 from pytesira.util.ttp_response import TTPResponse, TTPResponseType
 from pytesira.util.band import Band
-import time
 import logging
 
 class GraphicEqualizer(Block):

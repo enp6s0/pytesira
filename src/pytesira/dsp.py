@@ -58,10 +58,10 @@ class DSP:
         self.__exit = Event()
 
         # Status flags
-        self.__connected = Event()              # are we connected to the DSP? If not, many operations are not possible, and any data 
-                                                # we may have cached might be stale. In that case, read/write access to DSP block objects 
-                                                # should raise an exception. Additionally, if the transport status has changed (say, a
-                                                # re-connection has occured), DSP blocks will need to re-subscribe to TSP data streams.
+        self.__connected = Event()              # are we connected to the DSP? If not, many operations are not possible, and any data           # noqa: E116
+                                                # we may have cached might be stale. In that case, read/write access to DSP block objects       # noqa: E116
+                                                # should raise an exception. Additionally, if the transport status has changed (say, a          # noqa: E116
+                                                # re-connection has occured), DSP blocks will need to re-subscribe to TSP data streams.         # noqa: E116
 
         # Buffers
         self.__rx_buffer = ""                   # "raw" buffer for TTP (Tesira Text Protocol) data we received from device

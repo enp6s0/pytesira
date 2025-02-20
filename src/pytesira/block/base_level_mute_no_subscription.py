@@ -2,10 +2,8 @@
 from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponseType
 from pytesira.util.channel import Channel
-import time
-import logging
 
 class BaseLevelMuteNoSubscription(Block):
 
