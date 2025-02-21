@@ -168,85 +168,7 @@ class DSP:
         self.__logger.info("initializing blocks, please wait")
         self.blocks = {}
         for block_id, block in self.__block_map.items():
-
-            # Get block type
-            block_type = block["type"]
-
-            # Is this block type even supported?
-            try:
-
-                # Yes, we get a module handle for that block type
-                block_module = importlib.import_module(
-                    f"pytesira.block.{block_type}", "pytesira"
-                )
-                block_handle = getattr(block_module, f"{block_type}")
-                block_module_version = str(block_handle.VERSION)
-
-                # Do we want to load this block?
-                if block_handle in self.__skip_block_types:
-                    self.__logger.info(
-                        f"'{block_id}' load skipped ({block_type} excluded by user preference)"
-                    )
-                    continue
-
-                # And did we restrict types of blocks to be loaded?
-                if (
-                    len(self.__only_block_types) > 0
-                    and block_handle not in self.__only_block_types
-                ):
-                    self.__logger.info(
-                        f"'{block_id}' load skipped ({block_type} not allowed by user preference)"
-                    )
-                    continue
-
-                # Pre-mapped "attribute map / initialization helper" to pass along to module initialization?
-                block_module_init_helper = None
-                if (
-                    "attributes" in block
-                    and type(block["attributes"]) == dict
-                    and len(block["attributes"]) >= 1
-                ):
-                    try:
-                        assert (
-                            block["attributes"]["version"] == block_module_version
-                        ), "block module version mismatch"
-                        assert (
-                            type(block["attributes"]["helper"]) == dict
-                        ), "invalid block module map type"
-                        block_module_init_helper = block["attributes"]["helper"]
-
-                        # Empty helpers shouldn't be loaded
-                        if len(block_module_init_helper) <= 0:
-                            block_module_init_helper = None
-
-                    except Exception as e:
-                        self.__logger.debug(
-                            f"block {block_id} ({block_type}) attribute helper cannot be loaded: {e}"
-                        )
-
-                # Then, we initialize the module
-                self.blocks[block_id] = block_handle(
-                    block_id=block_id,  # block ID on Tesira
-                    exit_flag=self.__exit,  # exit flag to stop the block's threads (sync'd with everything else)
-                    connected_flag=self.__connected,  # connected flag (module can refuse to allow access if this is not set)
-                    command_queue=self.__command_queue,  # command queue (to run synchronous commands and get results)
-                    subscriptions=self.__subscriptions,  # subscriptions container (for routing purposes)
-                    init_helper=block_module_init_helper,  # initialization helper, to be used however the module wants
-                )
-
-                # At this point we should have initialization helper dict, so we update the block map with that
-                self.__block_map[block_id]["attributes"] = self.blocks[
-                    block_id
-                ].export_init_helper()
-
-                # Set up subscriptions for the module
-                self.blocks[block_id].subscribe()
-
-            # No... this module doesn't exist (not supported), so we don't load that
-            except ModuleNotFoundError:
-                self.__logger.debug(
-                    f"Unsupported DSP block type '{block_type}': {block_id}"
-                )
+            self.__init_block(block_id, block)
 
         # Start device attribute update loop
         self.__device_data_refresh_loop_handle = Thread(
@@ -260,6 +182,91 @@ class DSP:
         self.__logger.info(
             f"DSP ready (initialization took {round(started_in, 3)} seconds)"
         )
+
+    # =================================================================================================================
+
+    def __init_block(self, block_id: str, block: dict) -> None:
+        """
+        Given block ID and info (from the block map), initialize that block globally
+        """
+        # Get block type
+        block_type = block["type"]
+
+        # Is this block type even supported?
+        try:
+
+            # Yes, we get a module handle for that block type
+            block_module = importlib.import_module(
+                f"pytesira.block.{block_type}", "pytesira"
+            )
+            block_handle = getattr(block_module, f"{block_type}")
+            block_module_version = str(block_handle.VERSION)
+
+            # Do we want to load this block?
+            if block_handle in self.__skip_block_types:
+                self.__logger.info(
+                    f"'{block_id}' load skipped ({block_type} excluded by user preference)"
+                )
+                return
+
+            # And did we restrict types of blocks to be loaded?
+            if (
+                len(self.__only_block_types) > 0
+                and block_handle not in self.__only_block_types
+            ):
+                self.__logger.info(
+                    f"'{block_id}' load skipped ({block_type} not allowed by user preference)"
+                )
+                return
+
+            # Pre-mapped "attribute map / initialization helper" to pass along to module initialization?
+            block_module_init_helper = None
+            if (
+                "attributes" in block
+                and type(block["attributes"]) == dict
+                and len(block["attributes"]) >= 1
+            ):
+                try:
+                    assert (
+                        block["attributes"]["version"] == block_module_version
+                    ), "block module version mismatch"
+                    assert (
+                        type(block["attributes"]["helper"]) == dict
+                    ), "invalid block module map type"
+                    block_module_init_helper = block["attributes"]["helper"]
+
+                    # Empty helpers shouldn't be loaded
+                    if len(block_module_init_helper) <= 0:
+                        block_module_init_helper = None
+
+                except Exception as e:
+                    self.__logger.debug(
+                        f"block {block_id} ({block_type}) attribute helper cannot be loaded: {e}"
+                    )
+
+            # Then, we initialize the module
+            self.blocks[block_id] = block_handle(
+                block_id=block_id,  # block ID on Tesira
+                exit_flag=self.__exit,  # exit flag to stop the block's threads (sync'd with everything else)
+                connected_flag=self.__connected,  # connected flag (module can refuse to allow access if this is not set)
+                command_queue=self.__command_queue,  # command queue (to run synchronous commands and get results)
+                subscriptions=self.__subscriptions,  # subscriptions container (for routing purposes)
+                init_helper=block_module_init_helper,  # initialization helper, to be used however the module wants
+            )
+
+            # At this point we should have initialization helper dict, so we update the block map with that
+            self.__block_map[block_id]["attributes"] = self.blocks[
+                block_id
+            ].export_init_helper()
+
+            # Set up subscriptions for the module
+            self.blocks[block_id].subscribe()
+
+        # No... this module doesn't exist (not supported), so we don't load that
+        except ModuleNotFoundError:
+            self.__logger.debug(
+                f"Unsupported DSP block type '{block_type}': {block_id}"
+            )
 
     # =================================================================================================================
 
