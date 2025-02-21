@@ -58,7 +58,7 @@ class Band(IndexedObjectWithLevel):
 
     @bypass.setter
     def bypass(self, value: bool) -> None:
-        assert type(value) == bool, "invalid bypass type"
+        assert type(value) is bool, "invalid bypass type"
         assert self.__bypass is not None, "unsupported attribute bypass"
         self._callback("bypass", self.index, value)
 

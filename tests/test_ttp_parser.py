@@ -32,7 +32,7 @@ def test_parse_ok_simple_value():
             r = TTPResponse(f'+OK "value":{vq}')
             assert r.type == TTPResponseType.CMD_OK_VALUE
             assert r.value == v
-            assert type(r.value) == type(v)
+            assert type(r.value) is type(v)
 
 
 def test_parse_subscription_list():
@@ -59,11 +59,11 @@ def test_parse_subscription_list():
             assert r.subscription_type == TEST_SUBSCRIBE_TYPE
             assert r.subscription_channel_id == TEST_CHANNEL_ID
             assert r.subscription_block_id == TEST_BLOCK_ID
-            assert type(r.value) == list
+            assert type(r.value) is list
             assert len(r.value) == 2
 
-            assert type(r.value[0]) == type(v1)
-            assert type(r.value[1]) == type(v2)
+            assert type(r.value[0]) is type(v1)
+            assert type(r.value[1]) is type(v2)
             assert r.value[0] == v1
             assert r.value[1] == v2
 
@@ -121,17 +121,17 @@ def test_value_formatter():
     # Integer
     for i in range(-10, 10):
         assert value_format(f"{i}") == i
-        assert type(value_format(f"{i}")) == int
+        assert type(value_format(f"{i}")) is int
 
     # Floating-point
     for i in range(-10, 10):
         fv = float(i * 0.1)
         assert value_format(f"{fv}") == fv
-        assert type(value_format(f"{fv}")) == float
+        assert type(value_format(f"{fv}")) is float
 
     # String
     assert value_format("string") == "string"
-    assert type(value_format("string")) == str
+    assert type(value_format("string")) is str
 
 
 def test_parse_active_fault_list_nofault():
@@ -142,7 +142,7 @@ def test_parse_active_fault_list_nofault():
     r = TTPResponse(RESPONSE)
     assert r.type == TTPResponseType.CMD_OK_VALUE
 
-    assert type(r.value) == list
+    assert type(r.value) is list
     assert len(r.value) == 1
 
     rv = r.value[0]
@@ -160,7 +160,7 @@ def test_parse_active_fault_list_hasfault():
     r = TTPResponse(RESPONSE)
     assert r.type == TTPResponseType.CMD_OK_VALUE
 
-    assert type(r.value) == list
+    assert type(r.value) is list
     assert len(r.value) == 1
 
     rv = r.value[0]
@@ -168,7 +168,7 @@ def test_parse_active_fault_list_hasfault():
     assert rv["name"] == "Major Fault in Device"
     assert rv["serialNumber"] == 11122233
 
-    assert type(rv["faults"]) == list
+    assert type(rv["faults"]) is list
     assert len(rv["faults"]) == 1
 
     dante_fault = rv["faults"][0]
@@ -190,7 +190,7 @@ def test_parse_network_status():
     assert r.value["hostname"] == "TestDSP"
     assert r.value["defaultGatewayStatus"] == "0.0.0.0"
 
-    assert type(r.value["dnsStatus"]) == dict
+    assert type(r.value["dnsStatus"]) is dict
     assert r.value["dnsStatus"]["domainName"] == ""
     assert r.value["dnsStatus"]["primaryDNSServer"] == "192.168.1.3"
     assert r.value["dnsStatus"]["secondaryDNSServer"] == "0.0.0.0"

@@ -106,7 +106,7 @@ class DSP:
 
         # Any blocks that we wouldn't want to load?
         self.__skip_block_types = []
-        if skip_block_types is not None and type(skip_block_types) == list:
+        if skip_block_types is not None and type(skip_block_types) is list:
             self.__skip_block_types = skip_block_types
             self.__logger.info(
                 f"Will skip loading {len(self.__skip_block_types)} DSP block type(s)"
@@ -115,7 +115,7 @@ class DSP:
 
         # Conversely, a limitation on "load ONLY these block types"?
         self.__only_block_types = []
-        if only_block_types is not None and type(only_block_types) == list:
+        if only_block_types is not None and type(only_block_types) is list:
             self.__only_block_types = only_block_types
             self.__logger.info(
                 f"Only loading these block types: {self.__skip_block_types}"
@@ -223,7 +223,7 @@ class DSP:
             block_module_init_helper = None
             if (
                 "attributes" in block
-                and type(block["attributes"]) == dict
+                and type(block["attributes"]) is dict
                 and len(block["attributes"]) >= 1
             ):
                 try:
@@ -231,7 +231,7 @@ class DSP:
                         block["attributes"]["version"] == block_module_version
                     ), "block module version mismatch"
                     assert (
-                        type(block["attributes"]["helper"]) == dict
+                        type(block["attributes"]["helper"]) is dict
                     ), "invalid block module map type"
                     block_module_init_helper = block["attributes"]["helper"]
 

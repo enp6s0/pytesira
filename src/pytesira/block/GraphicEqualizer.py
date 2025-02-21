@@ -185,7 +185,7 @@ class GraphicEqualizer(Block):
         """
         Set 'bypass all channels' value
         """
-        assert type(value) == bool, "invalid value type for bypass"
+        assert type(value) is bool, "invalid value type for bypass"
 
         # To update the block status, we don't have a subscription, so we do a query (just to confirm)
         self.__bypass, cmd_result = self._set_and_update_val(

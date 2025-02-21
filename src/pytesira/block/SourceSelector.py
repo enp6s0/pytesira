@@ -245,7 +245,7 @@ class SourceSelector(Block):
 
     @muted.setter
     def muted(self, value: bool) -> None:
-        assert type(value) == bool, "invalid type for muted"
+        assert type(value) is bool, "invalid type for muted"
         cmd_res = self._sync_command(
             f'"{self._block_id}" set outputMute {str(value).lower()}'
         )
@@ -263,7 +263,7 @@ class SourceSelector(Block):
         """
         Select a specific source (or specify source = 0 to not select anything)
         """
-        assert type(value) == int, "invalid type for selected_source"
+        assert type(value) is int, "invalid type for selected_source"
         assert 0 <= value, "invalid value for selected_source"
         cmd_res = self._sync_command(f'"{self._block_id}" set sourceSelection {value}')
         if cmd_res.type != TTPResponseType.CMD_OK:
@@ -277,7 +277,7 @@ class SourceSelector(Block):
 
     @output_level.setter
     def output_level(self, value: float) -> None:
-        assert type(value) == float, "invalid type for value"
+        assert type(value) is float, "invalid type for value"
         cmd_res = self._sync_command(f'"{self._block_id}" set outputLevel {value}')
         if cmd_res.type != TTPResponseType.CMD_OK:
             raise ValueError(cmd_res.value)

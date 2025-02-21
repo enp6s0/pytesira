@@ -65,7 +65,7 @@ class Channel(IndexedObjectWithLevel):
 
     @muted.setter
     def muted(self, value: bool) -> None:
-        assert type(value) == bool, "invalid muted type"
+        assert type(value) is bool, "invalid muted type"
         assert self.__muted is not None, "unsupported attribute muted"
         self._callback("muted", self.index, value)
 
@@ -86,7 +86,7 @@ class Channel(IndexedObjectWithLevel):
 
     @inverted.setter
     def inverted(self, value: bool) -> None:
-        assert type(value) == bool, "invalid inverted type"
+        assert type(value) is bool, "invalid inverted type"
         assert self.__inverted is not None, "unsupported attribute inverted"
         self._callback("inverted", self.index, value)
 
@@ -107,7 +107,7 @@ class Channel(IndexedObjectWithLevel):
 
     @fault_on_inactive.setter
     def fault_on_inactive(self, value: bool) -> None:
-        assert type(value) == bool, "invalid fault_on_inactive type"
+        assert type(value) is bool, "invalid fault_on_inactive type"
         assert (
             self.__fault_on_inactive is not None
         ), "unsupported attribute fault_on_inactive"
