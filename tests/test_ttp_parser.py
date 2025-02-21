@@ -87,7 +87,7 @@ def test_parse_subscription_singlevalue():
         assert r.subscription_type == TEST_SUBSCRIBE_TYPE
         assert r.subscription_channel_id == TEST_CHANNEL_ID
         assert r.subscription_block_id == TEST_BLOCK_ID
-        assert type(r.value) == type(expected_val_typed)
+        assert type(r.value) is type(expected_val_typed)
         assert r.value == expected_val_typed
 
     # Check different value types
@@ -201,11 +201,11 @@ def test_parse_network_status():
     assert r.value["telnetDisabled"] == True  # noqa: E712
     assert r.value["switchPortMode"] == "SWITCH_PORT_MODE_CONTROL_AND_MEDIA"
 
-    assert type(r.value["networkInterfaceStatusWithName"]) == list
+    assert type(r.value["networkInterfaceStatusWithName"]) is list
     assert len(r.value["networkInterfaceStatusWithName"]) == 1
 
     assert r.value["networkInterfaceStatusWithName"][0]["interfaceId"] == "control"
-    assert type(r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]) == dict
+    assert type(r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]) is dict
 
     assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["addressSource"] == "STATIC"
     assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["gateway"] == "192.168.1.1"

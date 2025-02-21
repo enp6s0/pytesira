@@ -64,7 +64,7 @@ class IndexedObjectWithLevel(IndexedObject):
 
     @level.setter
     def level(self, value: float) -> None:
-        assert type(value) == float, "invalid level type"
+        assert type(value) is float, "invalid level type"
         assert self.__level is not None, "unsupported attribute level"
         self._callback("level", self.index, value)
 
@@ -85,7 +85,7 @@ class IndexedObjectWithLevel(IndexedObject):
 
     @min_level.setter
     def min_level(self, value: float) -> None:
-        assert type(value) == float, "invalid min_level type"
+        assert type(value) is float, "invalid min_level type"
         assert self.__level is not None, "unsupported attribute min_level"
         self._callback("min_level", self.index, value)
 
@@ -106,7 +106,7 @@ class IndexedObjectWithLevel(IndexedObject):
 
     @max_level.setter
     def max_level(self, value: float) -> None:
-        assert type(value) == float, "invalid level type"
+        assert type(value) is float, "invalid level type"
         assert self.__level is not None, "unsupported attribute max_level"
         self._callback("max_level", self.index, value)
 
