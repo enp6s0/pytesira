@@ -23,9 +23,6 @@ from threading import Thread, Event
 class DSP:
     """
     PyTesira DSP class - the main thing!
-
-    TODO:
-        * Graceful handling of SSH connection restarts - should also trigger re-subscription on blocks
     """
 
     def __init__(
@@ -84,6 +81,9 @@ class DSP:
         skip_block_types: (
             list[Block] | None
         ) = None,  # Block types to block from loading (can speed up initialization by disabling unused blocks)
+        only_block_types: (
+            list[Block] | None
+        ) = None,  # Block type limitation to ONLY load these and nothing else. Processed AFTER skip_block_types!
     ) -> None:
         """
         Connect to the DSP
@@ -112,6 +112,14 @@ class DSP:
                 f"Will skip loading {len(self.__skip_block_types)} DSP block type(s)"
             )
             self.__logger.debug(f"Skip load: {self.__skip_block_types}")
+
+        # Conversely, a limitation on "load ONLY these block types"?
+        self.__only_block_types = []
+        if only_block_types is not None and type(only_block_types) == list:
+            self.__only_block_types = only_block_types
+            self.__logger.info(
+                f"Only loading these block types: {self.__skip_block_types}"
+            )
 
         # Outgoing command queue, this is used so each block can append to it with synchronous
         # DSP command strings it wanted to process, which the main thread (us!) will process
@@ -171,17 +179,23 @@ class DSP:
                 block_module = importlib.import_module(
                     f"pytesira.block.{block_type}", "pytesira"
                 )
-                block_module_version = str(
-                    getattr(block_module, f"{block_type}").VERSION
-                )
+                block_handle = getattr(block_module, f"{block_type}")
+                block_module_version = str(block_handle.VERSION)
 
                 # Do we want to load this block?
-                if getattr(block_module, f"{block_type}") in self.__skip_block_types:
+                if block_handle in self.__skip_block_types:
                     self.__logger.info(
                         f"'{block_id}' load skipped ({block_type} excluded by user preference)"
                     )
-                    self.__logger.debug(
-                        f"skip module load: {block_id} ({block_type}/{block_module}) (user preference)"
+                    continue
+
+                # And did we restrict types of blocks to be loaded?
+                if (
+                    len(self.__only_block_types) > 0
+                    and block_handle not in self.__only_block_types
+                ):
+                    self.__logger.info(
+                        f"'{block_id}' load skipped ({block_type} not allowed by user preference)"
                     )
                     continue
 
@@ -211,7 +225,7 @@ class DSP:
                         )
 
                 # Then, we initialize the module
-                self.blocks[block_id] = getattr(block_module, f"{block_type}")(
+                self.blocks[block_id] = block_handle(
                     block_id=block_id,  # block ID on Tesira
                     exit_flag=self.__exit,  # exit flag to stop the block's threads (sync'd with everything else)
                     connected_flag=self.__connected,  # connected flag (module can refuse to allow access if this is not set)

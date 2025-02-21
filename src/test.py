@@ -6,6 +6,8 @@ from pytesira.dsp import DSP
 from pytesira.transport.ssh import SSH
 from pytesira.block.GraphicEqualizer import GraphicEqualizer
 
+# from pytesira.block.LevelControl import LevelControl
+
 import yaml
 import logging
 import sys
@@ -33,5 +35,6 @@ device.connect(
         host_key_check=False,
     ),
     skip_block_types=[GraphicEqualizer],
+    # only_block_types=[LevelControl],
 )
 device.save_block_map(output="dsp_test.bmap")
