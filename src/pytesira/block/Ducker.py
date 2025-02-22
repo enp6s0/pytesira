@@ -2,7 +2,7 @@
 from threading import Event
 from pytesira.block.block import Block
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponseType
+from pytesira.util.types import TTPResponseType
 import logging
 
 

@@ -6,7 +6,8 @@
 # Base transport and block classes
 from pytesira.transport.transport import Transport
 from pytesira.block.block import Block
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponse
+from pytesira.util.types import TTPResponseType
 
 # Others
 import os

@@ -13,3 +13,12 @@ class TTPResponseType(Enum):
     CMD_OK_VALUE = 2  # OK response with attached value
     CMD_ERROR = 3  # Error response
     SUBSCRIPTION = 5  # Subscription response
+
+
+class NoiseGeneratorType(Enum):
+    """
+    Noise generator types
+    """
+
+    WHITE = "WHITE"  # white noise
+    PINK = "PINK"  # pink noise

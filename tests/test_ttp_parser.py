@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Tests for the Tesira Text Protocol (TTP) parser
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponse
+from pytesira.util.types import TTPResponseType
 
 
 def test_parse_ok():
@@ -53,7 +54,9 @@ def test_parse_subscription_list():
             v1_str = str(v1).lower().strip()
             v2_str = str(v2).lower().strip()
 
-            r = TTPResponse(f'! "publishToken":"{TEST_PUBLISH_TOKEN}" "value":[{v1_str} {v2_str}]')
+            r = TTPResponse(
+                f'! "publishToken":"{TEST_PUBLISH_TOKEN}" "value":[{v1_str} {v2_str}]'
+            )
             assert r.type == TTPResponseType.SUBSCRIPTION
             assert r.publish_token == TEST_PUBLISH_TOKEN
             assert r.subscription_type == TEST_SUBSCRIBE_TYPE
@@ -110,7 +113,9 @@ def test_value_formatter():
     Note: this is a standalone method and the self paramter
           isn't used, so we just pass None into it
     """
-    value_format = lambda v: TTPResponse._TTPResponse__value_format(None, v)  # noqa: E731
+    value_format = lambda v: TTPResponse._TTPResponse__value_format(  # noqa: E731
+        None, v
+    )
 
     # Boolean
     for v in ["true", "yes", "on"]:
@@ -205,11 +210,42 @@ def test_parse_network_status():
     assert len(r.value["networkInterfaceStatusWithName"]) == 1
 
     assert r.value["networkInterfaceStatusWithName"][0]["interfaceId"] == "control"
-    assert type(r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]) is dict
+    assert (
+        type(r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"])
+        is dict
+    )
 
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["addressSource"] == "STATIC"
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["gateway"] == "192.168.1.1"
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["ip"] == "192.168.1.2"
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["netmask"] == "255.255.255.0"
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["macAddress"] == "00:00:00:00:00:00"
-    assert r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["linkStatus"] == "LINK_1_GB"
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"][
+            "addressSource"
+        ]
+        == "STATIC"
+    )
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"][
+            "gateway"
+        ]
+        == "192.168.1.1"
+    )
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"]["ip"]
+        == "192.168.1.2"
+    )
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"][
+            "netmask"
+        ]
+        == "255.255.255.0"
+    )
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"][
+            "macAddress"
+        ]
+        == "00:00:00:00:00:00"
+    )
+    assert (
+        r.value["networkInterfaceStatusWithName"][0]["networkInterfaceStatus"][
+            "linkStatus"
+        ]
+        == "LINK_1_GB"
+    )

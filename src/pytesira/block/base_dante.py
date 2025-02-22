@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from threading import Event
 from queue import Queue
-from pytesira.util.ttp_response import TTPResponse, TTPResponseType
+from pytesira.util.ttp_response import TTPResponse
+from pytesira.util.types import TTPResponseType
 from pytesira.block.base_level_mute import BaseLevelMute
 import logging
 
