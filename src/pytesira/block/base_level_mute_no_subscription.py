@@ -33,6 +33,9 @@ class BaseLevelMuteNoSubscription(Block):
         ) = None,  # initialization helper (if not specified, query everything from scratch)
     ) -> None:
 
+        # Block ID
+        self._block_id = block_id
+
         # Note: logger should be set up first by any block that is built on top of this
         # otherwise, we raise an exception
         assert hasattr(self, "_logger"), "logger should be set up first!"
@@ -122,11 +125,16 @@ class BaseLevelMuteNoSubscription(Block):
         Query status attributes - e.g., those that we expect to be changed (or tweaked) at runtime
         """
         for i in self.channels.keys():
+
+            # Channel ID tag to query. If channel 0 is found, that's a magic value representing
+            # "entire block", in which case we query without the channel ID
+            chan_id_tag = f" {i}" if i > 0 else ""
+
             self.channels[i]._muted(
-                self._sync_command(f"{self._block_id} get mute {i}").value
+                self._sync_command(f"{self._block_id} get mute{chan_id_tag}").value
             )
             self.channels[i]._level(
-                self._sync_command(f"{self._block_id} get level {i}").value
+                self._sync_command(f"{self._block_id} get level{chan_id_tag}").value
             )
 
     def refresh_status(self) -> None:
@@ -148,44 +156,65 @@ class BaseLevelMuteNoSubscription(Block):
         """
 
         # How many channels?
-        num_channels = int(
-            self._sync_command(f"{self._block_id} get numChannels").value
-        )
+        num_channels_query = self._sync_command(f"{self._block_id} get numChannels")
         self.channels = {}
 
-        # For each channel, what's the index and labels?
-        # NOTE: Tesira indices starts at 1, in some cases 0 is a special ID meaning all channels
-        for i in range(1, num_channels + 1):
+        # If that query is supported and we got an OK response, this is a base
+        # level-mute with multiple channels
+        if num_channels_query.type == TTPResponseType.CMD_OK_VALUE:
+            num_channels = int(num_channels_query.value)
 
-            # Query label
-            if self._chan_label_key == "@":
-                # Special value, this means we don't query but create one
-                # (since blocks such as AudioOutput doesn't have label support)
-                channel_label = f"{self._block_id}_{i}"
-            else:
-                label_query = self._sync_command(
-                    f"{self._block_id} get {self._chan_label_key} {i}"
-                )
-                if label_query.type == TTPResponseType.CMD_ERROR:
-                    channel_label = ""
+            # For each channel, what's the index and labels?
+            # NOTE: Tesira indices starts at 1, in some cases 0 is a special ID meaning all channels
+            for i in range(1, num_channels + 1):
+
+                # Query label
+                if self._chan_label_key == "@":
+                    # Special value, this means we don't query but create one
+                    # (since blocks such as AudioOutput doesn't have label support)
+                    channel_label = f"{self._block_id}_{i}"
                 else:
-                    channel_label = str(label_query.value).strip()
+                    label_query = self._sync_command(
+                        f"{self._block_id} get {self._chan_label_key} {i}"
+                    )
+                    if label_query.type == TTPResponseType.CMD_ERROR:
+                        channel_label = ""
+                    else:
+                        channel_label = str(label_query.value).strip()
 
-            # TODO: min/max levels can be changed (not supported yet but it could be), need to figure
-            # out how to make it play nice with block map caching. Potentially will need a callback
-            # so main thread can update block maps again with the new helper if we notice something
-            # has changed, hmm...
-            self.channels[int(i)] = Channel(
+                # TODO: min/max levels can be changed (not supported yet but it could be), need to figure
+                # out how to make it play nice with block map caching. Potentially will need a callback
+                # so main thread can update block maps again with the new helper if we notice something
+                # has changed, hmm...
+                self.channels[int(i)] = Channel(
+                    self._block_id,
+                    int(i),
+                    self._channel_change_callback,
+                    {
+                        "label": channel_label,
+                        "min_level": self._sync_command(
+                            f"{self._block_id} get minLevel {i}"
+                        ).value,
+                        "max_level": self._sync_command(
+                            f"{self._block_id} get maxLevel {i}"
+                        ).value,
+                    },
+                )
+
+        # Otherwise, this is an object with no channel (e.g., NoiseGenerator). To keep things
+        # consistent, we will assign channel 0 to it
+        else:
+            self.channels[int(0)] = Channel(
                 self._block_id,
-                int(i),
+                int(0),
                 self._channel_change_callback,
                 {
-                    "label": channel_label,
+                    "label": f"{self._block_id}",
                     "min_level": self._sync_command(
-                        f"{self._block_id} get minLevel {i}"
+                        f"{self._block_id} get minLevel"
                     ).value,
                     "max_level": self._sync_command(
-                        f"{self._block_id} get maxLevel {i}"
+                        f"{self._block_id} get maxLevel"
                     ).value,
                 },
             )

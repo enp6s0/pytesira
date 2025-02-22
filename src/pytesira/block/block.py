@@ -117,7 +117,7 @@ class Block:
         Helper that sets a specific value and then updates internal state with a re-query.
         Returns a tuple of the updated value as well as TTPResponse
         """
-        if channel is None:
+        if channel is None or channel == 0:
             # Simple case, no channels involved
             cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
             read_value = self._sync_command(f'"{self._block_id}" get {what}').value

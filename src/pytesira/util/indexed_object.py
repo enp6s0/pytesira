@@ -21,7 +21,7 @@ class IndexedObject:
         # Which block do we belong to, and what index?
         self.__block_id = str(block_id)
         self.__index = int(index)
-        assert 1 <= self.__index, "invalid block index"
+        assert 0 <= self.__index, "invalid block index"
 
         # Callback for when a value is updated, such that the parent block can actually
         # handle updating this
