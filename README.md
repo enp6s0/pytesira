@@ -33,6 +33,7 @@ has to do with that specific DSP block - setting up subscriptions, updating stat
 * `PassFilter`       : read all attributes, write cutoff frequency
 * `UsbInput`         : read connected/streaming states, read/write DSP side level/mute, read host side mute/level
 * `UsbOutput`        : read connected/streaming states, read/write DSP side level/mute, read host side mute/level
+* `NoiseGenerator`   : read/write level, read/write noise type (`white`/`pink`), read/write mute status
 
 ## Supported device-level features
 
