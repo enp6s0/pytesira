@@ -1,7 +1,7 @@
 # PyTesira
 Control your Biamp Tesira DSPs directly from Python!
 
-*work in progress!* stuff might break, please don't rely on this for anything critical... yet
+> **WORK IN PROGRESS**: stuff may rapidly change and/or break, please don't rely on this for anything critical... you have been warned
 
 > Obligatory disclaimer: this is an unofficial project which is not in any way affiliated with, or endorsed by, Biamp Systems
 
