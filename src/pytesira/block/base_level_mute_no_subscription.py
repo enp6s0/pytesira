@@ -99,7 +99,7 @@ class BaseLevelMuteNoSubscription(Block):
             )
             if cmd_res.type != TTPResponseType.CMD_OK:
                 raise ValueError(cmd_res.value)
-            self.channels[channel_index]._level(new_val)
+            self.channels[channel_index]._level(float(new_val))
             return cmd_res
 
         else:

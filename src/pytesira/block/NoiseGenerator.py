@@ -2,6 +2,7 @@
 from threading import Event
 from queue import Queue
 from pytesira.block.base_level_mute_no_subscription import BaseLevelMuteNoSubscription
+from pytesira.util.types import NoiseGeneratorType, TTPResponseType
 import logging
 
 
@@ -13,7 +14,7 @@ class NoiseGenerator(BaseLevelMuteNoSubscription):
     # Define version of this block's code here. A mismatch between this
     # and the value saved in the cached attribute-list value file will
     # trigger a re-discovery of attributes, to handle any changes
-    VERSION = "0.1.0"
+    VERSION = "0.1.1"
 
     def __init__(
         self,
@@ -33,9 +34,6 @@ class NoiseGenerator(BaseLevelMuteNoSubscription):
         # Setup logger
         self._logger = logging.getLogger(f"{__name__}.{block_id}")
 
-        # No channel label key, use autogeneration
-        self._chan_label_key = "@"
-
         # Initialize base class
         super().__init__(
             block_id,
@@ -48,3 +46,33 @@ class NoiseGenerator(BaseLevelMuteNoSubscription):
 
         # Query status attributes
         self._query_status_attributes()
+
+    # =================================================================================================================
+
+    def _query_status_attributes(self):
+        """
+        Query status attributes that doesn't support subscriptions
+        """
+        super()._query_status_attributes
+        self.__noise_type = NoiseGeneratorType(
+            str(self._sync_command(f"{self._block_id} get type").value).upper().strip()
+        )
+        self.channels[0]._muted(self._sync_command(f"{self._block_id} get mute").value)
+
+    # =================================================================================================================
+
+    @property
+    def noise_type(self) -> bool:
+        if self.__noise_type is None:
+            raise AttributeError("unsupported attribute noise_type")
+        return self.__noise_type
+
+    @noise_type.setter
+    def noise_type(self, value: NoiseGeneratorType) -> None:
+        assert type(value) is NoiseGeneratorType
+        rtn_val, cmd_res = self._set_and_update_val("type", value=str(value.value))
+        self.__noise_type = NoiseGeneratorType(str(rtn_val).upper().strip())
+
+        if cmd_res.type != TTPResponseType.CMD_OK:
+            raise ValueError(cmd_res.value)
+        return cmd_res

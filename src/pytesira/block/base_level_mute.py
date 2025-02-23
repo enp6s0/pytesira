@@ -107,14 +107,15 @@ class BaseLevelMute(Block):
 
     # =================================================================================================================
 
-    def _register_base_subscriptions(self) -> None:
+    def _register_base_subscriptions(self) -> list[TTPResponse]:
         """
         (re)register subscriptions for this module. This should be called by each
         module on init, and may be called again by the main thread if an interruption
         in connectivity is detected (e.g., SSH disconnect-then-reconnect)
         """
-        self._register_subscription(subscribe_type="mutes", channel=None)
-        self._register_subscription(subscribe_type="levels", channel=None)
+        mute_reg = self._register_subscription(subscribe_type="mutes", channel=None)
+        level_reg = self._register_subscription(subscribe_type="levels", channel=None)
+        return [mute_reg, level_reg]
 
     # =================================================================================================================
 
@@ -149,7 +150,7 @@ class BaseLevelMute(Block):
             for i, level in enumerate(response.value):
                 idx = i + 1
                 if int(idx) in self.channels.keys():
-                    self.channels[int(idx)]._level(level)
+                    self.channels[int(idx)]._level(float(level))
                 else:
                     self._logger.error(f"level response invalid index: {idx}")
             self._logger.debug(f"levels changed: {response.value}")

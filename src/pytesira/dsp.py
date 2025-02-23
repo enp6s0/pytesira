@@ -40,6 +40,10 @@ class DSP:
         # If block map isn't specified, or there are detectable differences (e.g., different # of DSP blocks),
         # PyTesira will automatically query the DSP for attribute updates.
 
+        # Note on device data refresh/resubscription intervals
+        # (still a TODO: it seems that if this is set to low values for bigger systems, it'll cause channel
+        #  contention and subscription value updates can be missed)
+
         # PyTesira version
         try:
             self.__version = importlib.metadata.version("pytesira")
@@ -52,8 +56,11 @@ class DSP:
         self.ready = False
 
         # Get a local logger first
-        self.__logger = logging.getLogger(__name__)
+        self.__logger = logging.getLogger("pytesira.dsp")
         self.__logger.info(f"PyTesira version {self.__version}")
+
+        # Get a separate I/O (communications/transport) logger, as this can be pretty chatty
+        self.__io_logger = logging.getLogger("pytesira.dsp.io")
 
         # Exit event for child threads, to coordinate a clean shutdown
         self.__exit = Event()
@@ -254,6 +261,7 @@ class DSP:
                 subscriptions=self.__subscriptions,  # subscriptions container (for routing purposes)
                 init_helper=block_module_init_helper,  # initialization helper, to be used however the module wants
             )
+            self.__logger.debug(f"block loaded: {block_id} ({block_handle})")
 
             # At this point we should have initialization helper dict, so we update the block map with that
             self.__block_map[block_id]["attributes"] = self.blocks[
@@ -450,23 +458,27 @@ class DSP:
 
             # Run the command and return to the correct handle's callback
             # this should be the ONLY place we call transport_send_and_wait!
-            response = self.__transport_send_and_wait(command)
+            try:
+                response = self.__transport_send_and_wait(command)
 
-            if handle == self:
-                # Hey, this is called by us directly, we don't need
-                # to callback for this, just write data to local synchronous
-                # command mailbox and we'll be done:
-                self.__sync_cmd_mailbox = response
-                self.__logger.debug(
-                    "sync command response delivery: main loop sync_cmd_mailbox"
-                )
-            else:
-                # This is called from elsewhere, so we need to invoke
-                # the corresponding block's callback:
-                handle._sync_command_callback(data=response)
-                self.__logger.debug(
-                    f"sync command response delivery: callback to {handle}"
-                )
+                if handle == self:
+                    # Hey, this is called by us directly, we don't need
+                    # to callback for this, just write data to local synchronous
+                    # command mailbox and we'll be done:
+                    self.__sync_cmd_mailbox = response
+                    self.__io_logger.debug(
+                        "sync command response delivery: main loop sync_cmd_mailbox"
+                    )
+                else:
+                    # This is called from elsewhere, so we need to invoke
+                    # the corresponding block's callback:
+                    handle._sync_command_callback(data=response)
+                    self.__io_logger.debug(
+                        f"sync command response delivery: callback to {handle}"
+                    )
+
+            except Exception as e:
+                self._logger.warning(f"command loop exception: {e}")
 
             # Notify queue of a completed task
             self.__command_queue.task_done()
@@ -477,7 +489,7 @@ class DSP:
 
     # =================================================================================================================
 
-    def __device_data_refresh_loop(self) -> None:
+    def __device_data_refresh_loop(self) -> None:  # noqa: C901
         """
         Device data refresh loop. This constantly queries the device for attributes that cannot
         be subscribed to, but nevertheless would be of interest to PyTesira users (e.g., active alarms)
@@ -525,11 +537,19 @@ class DSP:
             f"starting device data refresher ({num_tasks} tasks, spacing {time_spacing} sec)"
         )
 
+        # Do we want to re-process subscriptions in a certain loop iteration?
+        # (we only do this if the first re-subscription call returns a positive,
+        # that's our signal that the connection has indeed been restarted)
+        process_resubscriptions = False
+
         # Inifinite loop until we're told to exit
         while not self.__exit.is_set():
 
-            # For each item in the task list, see what it is and process
-            # accordingly
+            # Did we trigger resubscription in this iteration?
+            process_resubscriptions_set_in_loop = False
+
+            # For each item in the task list, see what it is and process accordingly
+            is_first_subscription_refresh = True
             for refresh_task_item in refreshes:
 
                 # Data update query
@@ -542,10 +562,59 @@ class DSP:
 
                 # Subscription refresh
                 elif refresh_task_item["type"] == "subscription_refresh":
-                    refresh_task_item["block"]._register_base_subscriptions()
+
+                    # First one in a "not refresh all" cycle?
+                    if is_first_subscription_refresh and not process_resubscriptions:
+
+                        # Yes, this is the first one. Let's rest that flag now
+                        is_first_subscription_refresh = False
+
+                        # We'll process this refresh regardless, and use its result
+                        # to determine if other blocks needs resubscription also
+                        process_this_refresh = True
+                        use_result_as_check = True
+
+                    else:
+                        # No, not first. We only process this IF process_resubscriptions is set
+                        process_this_refresh = bool(process_resubscriptions)
+                        use_result_as_check = False
+
+                    # Refresh this?
+                    if process_this_refresh:
+                        sub_refresh_statuses = refresh_task_item[
+                            "block"
+                        ]._register_base_subscriptions()
+
+                    # Using result to check?
+                    if (
+                        use_result_as_check
+                        and type(sub_refresh_statuses) is list
+                        and len(sub_refresh_statuses) > 0
+                    ):
+
+                        # If any result returns CMD_OK, re-subscription has occured
+                        # and therefore we should trigger ALL resubscriptions
+                        for res in sub_refresh_statuses:
+                            if res is not None and res.type == TTPResponseType.CMD_OK:
+                                self.__logger.warning(
+                                    "detected subscription lapse (DSP reprogrammed?)"
+                                )
+                                process_resubscriptions = True
+                                process_resubscriptions_set_in_loop = True
+                                break
+
+                        # Now, out of this inner loop, IF process_resubscriptions is set,
+                        # we'll want to break the outer loop too (and let us reprocess everything)
+                        if process_resubscriptions:
+                            break
 
                 # Sleep to meet our time spacing requirements
                 time.sleep(time_spacing)
+
+            # IF we made it here without process_resubscriptions being set in the loop
+            # we reset the flag
+            if not process_resubscriptions_set_in_loop:
+                process_resubscriptions = False
 
         # Exit
         self.__logger.debug("device data refresh loop terminated")
@@ -608,12 +677,12 @@ class DSP:
 
                 # Subscription?
                 if decoded.type == TTPResponseType.SUBSCRIPTION:
-                    self.__logger.debug(f"rx (sub): {decoded}")
+                    self.__io_logger.debug(f"rx (sub): {decoded}")
 
                     # Where did this come from?
                     subscriber = self.__subscriptions[decoded.publish_token]
                     if not subscriber:
-                        self.__logger.error(
+                        self.__io_logger.error(
                             f"subscription callback for invalid subscriber: {decoded.publish_token}"
                         )
                     else:
@@ -623,7 +692,7 @@ class DSP:
                         sub_handle.subscription_callback(decoded)
 
                 else:
-                    self.__logger.debug(f"rx (res): {decoded}")
+                    self.__io_logger.debug(f"rx (res): {decoded}")
                     self.__rx_cmd_mailbox = decoded
 
         # If we're here, we're exiting

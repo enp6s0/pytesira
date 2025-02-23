@@ -61,25 +61,41 @@ class BaseUSB(BaseLevelMuteNoSubscription):
 
     # =================================================================================================================
 
-    def _register_base_subscriptions(self) -> None:
+    def _register_base_subscriptions(self) -> list[TTPResponse]:
         """
         (re)register subscriptions for this module. This should be called by each
         module on init, and may be called again by the main thread if an interruption
         in connectivity is detected (e.g., SSH disconnect-then-reconnect)
         """
-        self._register_subscription(subscribe_type="hostMasterMute", channel=None)
-        self._register_subscription(subscribe_type="hostMasterVol", channel=None)
+        sub_resp = []
+
+        sub_resp.append(
+            self._register_subscription(subscribe_type="hostMasterMute", channel=None)
+        )
+        sub_resp.append(
+            self._register_subscription(subscribe_type="hostMasterVol", channel=None)
+        )
         for i in self.channels.keys():
-            self._register_subscription(subscribe_type="hostMute", channel=int(i))
-            self._register_subscription(subscribe_type="hostVol", channel=int(i))
+            sub_resp.append(
+                self._register_subscription(subscribe_type="hostMute", channel=int(i))
+            )
+            sub_resp.append(
+                self._register_subscription(subscribe_type="hostVol", channel=int(i))
+            )
 
             # TODO: we need to handle peak-occuring as callback triggering only
             # but no internal state updates, WHILE letting called functions know
             # exactly which channel is peaking
             # self._register_subscription(subscribe_type = "peak", channel = int(i))
 
-        self._register_subscription(subscribe_type="connected", channel=None)
-        self._register_subscription(subscribe_type="streaming", channel=None)
+        sub_resp.append(
+            self._register_subscription(subscribe_type="connected", channel=None)
+        )
+        sub_resp.append(
+            self._register_subscription(subscribe_type="streaming", channel=None)
+        )
+
+        return sub_resp
 
     def _query_status_attributes(self) -> None:
         """

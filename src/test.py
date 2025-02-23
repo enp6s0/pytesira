@@ -22,6 +22,7 @@ try:
         debug = True
 except Exception:
     pass
+logging.getLogger("pytesira.dsp.io").setLevel(logging.INFO)
 
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)

@@ -117,6 +117,8 @@ class Block:
         Helper that sets a specific value and then updates internal state with a re-query.
         Returns a tuple of the updated value as well as TTPResponse
         """
+        self._logger.debug(f"set/update val: {what} (channel={channel}) -> {value}")
+
         if channel is None or channel == 0:
             # Simple case, no channels involved
             cmd_result = self._sync_command(f'"{self._block_id}" set {what} {value}')
@@ -147,7 +149,7 @@ class Block:
 
     def _register_subscription(
         self, subscribe_type: str, channel: int | None = None
-    ) -> None:
+    ) -> TTPResponse:
         """
         Register subscription with the DSP. This function generates the subscription command
         with the correct prefix IDs and metadata, such that responses will be directed back here
@@ -173,10 +175,14 @@ class Block:
         self._subscriptions[sub_name] = subscription_meta
 
         # Send command to device to actually start subscription
-        self._sync_command(sub_string)
-        self._logger.debug(
-            f"subscription setup: {self._block_id} {subscribe_type} (total {len(self._subscriptions)} subscriptions active)"
-        )
+        cmd_res = self._sync_command(sub_string)
+
+        # This is too chatty, TODO: figure out how to nicely put it in a separate logger
+        # self._logger.debug(
+        #     f"subscription setup: {self._block_id} {subscribe_type} (total {len(self._subscriptions)} subscriptions active)"
+        # )
+
+        return cmd_res
 
     def _sync_command_callback(self, data: TTPResponse) -> None:
         """
